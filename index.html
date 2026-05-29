@@ -1,0 +1,678 @@
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V2</title>
+    <style>
+        :root {
+            --primary-color: #2b579a;
+            --primary-hover: #1e3d6b;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333333;
+            --border-color: #cccccc;
+            --success-color: #2ea44f;
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Sarabun', 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab-btn {
+            background: #e0e0e0;
+            border: none;
+            padding: 12px 24px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            margin-right: 4px;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Invoice Style */
+        .invoice-box {
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            background: #fff;
+            position: relative;
+        }
+
+        .invoice-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .invoice-title {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 0 0 10px 0;
+            color: #000;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .meta-item {
+            font-size: 16px;
+        }
+
+        .meta-item label {
+            font-weight: bold;
+        }
+
+        .qr-section {
+            text-align: center;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background: #fafafa;
+            border-radius: 4px;
+            width: 160px;
+        }
+
+        .qr-placeholder {
+            width: 140px;
+            height: 140px;
+            background: #eee;
+            margin: 0 auto 5px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+            border: 1px dashed #999;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            border: 1px solid #333;
+            padding: 10px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        td.left {
+            text-align: left;
+            font-weight: bold;
+        }
+
+        input[type="number"], input[type="text"], select {
+            width: 100%;
+            padding: 6px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 15px;
+        }
+
+        input:focus, select:focus {
+            outline: 2px solid var(--primary-color);
+        }
+
+        .total-row {
+            background-color: #eaeff7;
+            font-weight: bold;
+        }
+
+        .grand-total {
+            font-size: 22px;
+            color: #d32f2f;
+            font-weight: bold;
+        }
+
+        .invoice-footer {
+            margin-top: 4px;
+            border-top: 1px solid #333;
+            padding-top: 15px;
+        }
+
+        .signature-area {
+            margin-top: 40px;
+            text-align: center;
+            float: right;
+            width: 250px;
+        }
+
+        .clear {
+            clear: both;
+        }
+
+        /* Form Controls */
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #2c974b;
+        }
+
+        .btn-secondary {
+            background-color: #6e7681;
+            color: white;
+        }
+
+        /* Config Form */
+        .config-group {
+            margin-bottom: 15px;
+        }
+        .config-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* History Table Styles */
+        .filter-section {
+            background: #eee;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .tabs, .btn-group, .instruction-card, .setup-section, .filter-section {
+                display: none !important;
+            }
+            .tab-content {
+                box-shadow: none;
+                padding: 0;
+            }
+            .invoice-box {
+                border: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>🏠 ระบบจัดการหอพัก & ส่งข้อมูลเข้า Google Sheets</h2>
+    
+    <div class="tabs">
+        <button class="tab-btn active" onclick="switchTab('invoice-tab')">📝 ออกบิลค่าเช่า</button>
+        <button class="tab-btn" onclick="switchTab('history-tab')">📊 ประวัติข้อมูลรายห้อง</button>
+        <button class="tab-btn" onclick="switchTab('config-tab')">⚙️ ตั้งค่าระบบ & เชื่อมต่อหลังบ้าน</button>
+    </div>
+
+    <!-- TAB 1: INVOICE -->
+    <div id="invoice-tab" class="tab-content active">
+        <div class="invoice-box" id="printArea">
+            <div class="invoice-header">
+                <div>
+                    <div class="invoice-title">บิลค่าเช่าห้องพัก</div>
+                    <div class="meta-grid">
+                        <div class="meta-item">
+                            <label>ห้องที่:</label>
+                            <select id="roomNo" style="width: 100px; display: inline-block;">
+                                <option value="101">101</option>
+                                <option value="102">102</option>
+                                <option value="103">103</option>
+                                <option value="104">104</option>
+                                <option value="105">105</option>
+                                <option value="106">106</option>
+                                <option value="107">107</option>
+                                <option value="108">108</option>
+                                <option value="109">109</option>
+                                <option value="110">110</option>
+                            </select>
+                        </div>
+                        <div class="meta-item">
+                            <label>ประจำเดือน:</label>
+                            <input type="text" id="billingMonth" placeholder="เช่น มกราคม 2026" style="width: 150px; display: inline-block;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="qr-section">
+                    <div class="qr-placeholder" id="qrContainer">
+                        <span style="padding: 10px;">[ แนบรูป QR Code ที่นี่ ]</span>
+                    </div>
+                    <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
+                </div>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">รายการ</th>
+                        <th style="width: 15%;">เลขครั้งก่อน</th>
+                        <th style="width: 15%;">เลขครั้งนี้</th>
+                        <th style="width: 15%;">จำนวนหน่วยที่ใช้</th>
+                        <th style="width: 15%;">ราคาต่อหน่วย</th>
+                        <th style="width: 15%;">รวมเงิน (บาท)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td class="left">ค่าเช่าห้อง</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><input type="number" id="rentAmount" value="3500" oninput="calculateInvoice()"></td>
+                    </tr>
+                    <tr>
+                        <td class="left">ค่าน้ำ</td>
+                        <td><input type="number" id="waterBefore" value="0" oninput="calculateInvoice()"></td>
+                        <td><input type="number" id="waterAfter" value="0" oninput="calculateInvoice()"></td>
+                        <td><span id="waterUnit">0</span></td>
+                        <td><input type="number" id="waterRate" value="18" oninput="calculateInvoice()"></td>
+                        <td><span id="waterTotal">0</span></td>
+                    </tr>
+                    <tr>
+                        <td class="left">ค่าไฟ</td>
+                        <td><input type="number" id="elecBefore" value="0" oninput="calculateInvoice()"></td>
+                        <td><input type="number" id="elecAfter" value="0" oninput="calculateInvoice()"></td>
+                        <td><span id="elecUnit">0</span></td>
+                        <td><input type="number" id="elecRate" value="7" oninput="calculateInvoice()"></td>
+                        <td><span id="elecTotal">0</span></td>
+                    </tr>
+                    <tr>
+                        <td class="left">อินเทอร์เน็ต / อื่นๆ</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><input type="number" id="internetAmount" value="0" oninput="calculateInvoice()"></td>
+                    </tr>
+                    <tr>
+                        <td class="left" style="color: #c62828;">ส่วนลด</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td><input type="number" id="discountAmount" value="0" oninput="calculateInvoice()" style="color: #c62828;"></td>
+                    </tr>
+                    <tr class="total-row">
+                        <td colspan="5" style="text-align: right;">รวมยอดเงินที่ต้องชำระทั้งสิ้น:</td>
+                        <td><span id="grandTotal" class="grand-total">3500</span></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="invoice-footer">
+                <p style="font-weight: bold; margin: 0 0 5px 0;">* ชำระเงินทุกวันที่ 5 ของเดือน</p>
+                <p style="margin: 0;" id="bankInfoShow">บัญชีธนาคารสำหรับโอนเงิน: กรุณาตั้งค่าในแท็บตั้งค่า</p>
+                
+                <div class="signature-area">
+                    <p>ลายเซ็นต์: ___________________________</p>
+                    <p style="margin-top: 5px;">( เจ้าของบ้าน )</p>
+                </div>
+                <div class="clear"></div>
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ บันทึกเป็นไฟล์ PDF</button>
+            <button class="btn btn-success" onclick="sendDataToSheets()">💾 บันทึกข้อมูลลง Google Sheets</button>
+        </div>
+    </div>
+
+    <!-- TAB 2: HISTORY (NEW) -->
+    <div id="history-tab" class="tab-content">
+        <h3>📊 ตารางประวัติข้อมูลและรายการย้อนหลังรายห้อง</h3>
+        <p>คุณสามารถเรียกดูสรุปค่าเช่า ค่าน้ำ ค่าไฟ ย้อนหลังของแต่ละห้องพักได้จากตารางนี้</p>
+        
+        <div class="filter-section">
+            <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้องที่ต้องการเรียกดู:</label>
+            <select id="historyRoomSelect" style="width: 120px;" onchange="filterHistoryData()">
+                <option value="101">101</option>
+                <option value="102">102</option>
+                <option value="103">103</option>
+                <option value="104">104</option>
+                <option value="105">105</option>
+                <option value="106">106</option>
+                <option value="107">107</option>
+                <option value="108">108</option>
+                <option value="109">109</option>
+                <option value="110">110</option>
+            </select>
+            <button class="btn btn-primary" onclick="fetchHistoryFromSheets()" style="padding: 8px 16px; font-size: 14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="historyTable">
+                <thead>
+                    <tr>
+                        <th>วัน-เวลาที่บันทึก</th>
+                        <th>ประจำเดือน</th>
+                        <th>ห้อง</th>
+                        <th>ค่าเช่าห้อง</th>
+                        <th>หน่วยน้ำที่ใช้</th>
+                        <th>รวมค่าน้ำ</th>
+                        <th>หน่วยไฟที่ใช้</th>
+                        <th>รวมค่าไฟ</th>
+                        <th>อื่นๆ</th>
+                        <th>ส่วนลด</th>
+                        <th style="color: #d32f2f;">ยอดสุทธิ</th>
+                    </tr>
+                </thead>
+                <tbody id="historyTableBody">
+                    <tr>
+                        <td colspan="11" style="color: #666; padding: 20px;">ยังไม่มีข้อมูล หรือกรุณากดปุ่มเพื่อดึงข้อมูลจากหลังบ้าน</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB 3: CONFIG -->
+    <div id="config-tab" class="tab-content">
+        <h3>⚙️ ตั้งค่าการเชื่อมต่อ Google Sheets & ข้อมูลที่พัก</h3>
+        
+        <div class="config-group">
+            <label>Google Web App URL (ได้จาก Apps Script):</label>
+            <input type="text" id="webAppUrl" placeholder="https://script.google.com/macros/s/.../exec" style="text-align: left;">
+            <p style="font-size: 13px; color: #666; margin-top: 5px;">* นำ URL ที่ได้จากการ Deploy Web App ใน Google Sheets มาวางที่นี่เพื่อให้ระบบบันทึกและดึงข้อมูลได้จริง</p>
+        </div>
+
+        <div class="config-group">
+            <label>ข้อมูลบัญชีธนาคาร (แสดงท้ายบิล):</label>
+            <input type="text" id="bankInfoInput" value="ธนาคารกสิกรไทย เลขที่บัญชี 123-4-56789-0 ชื่อบัญชี สมชาย ใจดี" oninput="updateBankInfo()" style="text-align: left;">
+        </div>
+
+        <div class="config-group">
+            <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
+            <input type="text" id="qrUrlInput" placeholder="ใส่ลิงก์รูปภาพ QR Code เพื่อให้แสดงในบิลแทนกล่องว่าง" oninput="updateQRImage()" style="text-align: left;">
+        </div>
+
+        <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
+
+        <div class="instruction-card" style="background-color: #f0f7ff; padding: 20px; border-left: 4px solid var(--primary-color); border-radius: 4px;">
+            <h4>💡 วิธีการเตรียมตัวและเชื่อมโยง Google Sheets หลังบ้าน (เวอร์ชันอัปเดต รองรับการดึงประวัติ)</h4>
+            <ol style="line-height: 1.6;">
+                <li>สร้าง Google Sheet ใหม่ และตั้งชื่อหัวคอลัมน์ใน <b>แถวที่ 1</b> ตามนี้:
+                    <br><code style="background:#fff; padding:2px 5px; border:1px solid #ccc; display:inline-block; margin:5px 0;">Timestamp | Month | Room | Rent | WaterUnit | WaterTotal | ElecUnit | ElecTotal | Internet | Discount | GrandTotal</code>
+                </li>
+                <li>ไปที่เมนู <b>Extensions (ส่วนขยาย) > Apps Script</b></li>
+                <li>ลบโค้ดเก่าออกให้หมด แล้วนำโค้ดที่อัปเดตใหม่ด้านล่างนี้ไปวางแทน (มีทั้งระบบบันทึกข้อมูลและดึงข้อมูลกลับมาแสดงบนเว็บ):
+<pre style="background: #272822; color: #f8f8f2; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 13px;">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  sheet.appendRow([new Date(), data.month, data.room, data.rent, data.waterUnit, data.waterTotal, data.elecUnit, data.elecTotal, data.internet, data.discount, data.grandTotal]);
+  return ContentService.createTextOutput(JSON.stringify({"status":"success"})).setMimeType(ContentService.MimeType.JSON);
+}
+
+function doGet() {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var rows = sheet.getDataRange().getValues();
+  var data = [];
+  for (var i = 1; i &lt; rows.length; i++) {
+    data.push({
+      timestamp: rows[i][0], month: rows[i][1], room: rows[i][2], rent: rows[i][3],
+      waterUnit: rows[i][4], waterTotal: rows[i][5], elecUnit: rows[i][6], elecTotal: rows[i][7],
+      internet: rows[i][8], discount: rows[i][9], grandTotal: rows[i][10]
+    });
+  }
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+</pre>
+                </li>
+                <li>กดปุ่ม <b>Deploy (ทำให้ใช้งานได้) > New deployment (การทำให้ใช้งานได้ใหม่)</b></li>
+                <li>เลือกประเภทเป็น <b>Web app</b>, ตั้งค่าช่อง Who has access เป็น <b>Anyone (ทุกคน)</b> แล้วกด Deploy</li>
+                <li>คัดลอก <b>Web app URL</b> มาวางในช่องด้านบนของหน้าเว็บนี้</li>
+            </ol>
+        </div>
+    </div>
+</div>
+
+<script>
+    // เก็บข้อมูลดิบทั้งหมดที่ดึงมาจาก Google Sheets เพื่อใช้ฟิลเตอร์
+    let globalHistoryData = [];
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        
+        document.getElementById(tabId).classList.add('active');
+        event.currentTarget.classList.add('active');
+        
+        // ถ้ากดเข้าแท็บประวัติ ให้ลองดึงข้อมูลอัตโนมัติ
+        if (tabId === 'history-tab' && globalHistoryData.length === 0) {
+            let url = document.getElementById('webAppUrl').value;
+            if (url) fetchHistoryFromSheets();
+        }
+    }
+
+    function calculateInvoice() {
+        let rent = parseFloat(document.getElementById('rentAmount').value) || 0;
+        let internet = parseFloat(document.getElementById('internetAmount').value) || 0;
+        let discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+
+        // Water
+        let wBefore = parseFloat(document.getElementById('waterBefore').value) || 0;
+        let wAfter = parseFloat(document.getElementById('waterAfter').value) || 0;
+        let wRate = parseFloat(document.getElementById('waterRate').value) || 0;
+        let wUnit = wAfter >= wBefore ? wAfter - wBefore : 0;
+        let wTotal = wUnit * wRate;
+        document.getElementById('waterUnit').innerText = wUnit;
+        document.getElementById('waterTotal').innerText = wTotal.toFixed(2);
+
+        // Electric
+        let eBefore = parseFloat(document.getElementById('elecBefore').value) || 0;
+        let eAfter = parseFloat(document.getElementById('elecAfter').value) || 0;
+        let eRate = parseFloat(document.getElementById('elecRate').value) || 0;
+        let eUnit = eAfter >= eBefore ? eAfter - eBefore : 0;
+        let eTotal = eUnit * eRate;
+        document.getElementById('elecUnit').innerText = eUnit;
+        document.getElementById('elecTotal').innerText = eTotal.toFixed(2);
+
+        // Grand Total
+        let total = (rent + wTotal + eTotal + internet) - discount;
+        document.getElementById('grandTotal').innerText = total.toFixed(2);
+    }
+
+    function updateBankInfo() {
+        document.getElementById('bankInfoShow').innerText = "บัญชีธนาคารสำหรับโอนเงิน: " + document.getElementById('bankInfoInput').value;
+    }
+
+    function updateQRImage() {
+        let url = document.getElementById('qrUrlInput').value;
+        let container = document.getElementById('qrContainer');
+        if(url) {
+            container.innerHTML = `<img src="${url}" style="width:100%; height:100%; object-fit:contain;">`;
+        } else {
+            container.innerHTML = `<span style="padding: 10px;">[ แนบรูป QR Code ที่นี่ ]</span>`;
+        }
+    }
+
+    function sendDataToSheets() {
+        let url = document.getElementById('webAppUrl').value;
+        if(!url) {
+            alert('❌ กรุณากรอก Web App URL ในแท็บตั้งค่าก่อนบันทึกข้อมูลครับ!');
+            return;
+        }
+
+        let payload = {
+            month: document.getElementById('billingMonth').value,
+            room: document.getElementById('roomNo').value,
+            rent: parseFloat(document.getElementById('rentAmount').value) || 0,
+            waterUnit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
+            waterTotal: parseFloat(document.getElementById('waterTotal').innerText) || 0,
+            elecUnit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
+            elecTotal: parseFloat(document.getElementById('elecTotal').innerText) || 0,
+            internet: parseFloat(document.getElementById('internetAmount').value) || 0,
+            discount: parseFloat(document.getElementById('discountAmount').value) || 0,
+            grandTotal: parseFloat(document.getElementById('grandTotal').innerText) || 0
+        };
+
+        if(!payload.month) {
+            alert('❌ กรุณากรอกช่อง ประจำเดือน ก่อนกดบันทึกครับ');
+            return;
+        }
+
+        fetch(url, {
+            method: 'POST',
+            mode: 'no-cors',
+            cache: 'no-cache',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        }).then(() => {
+            alert('✅ บันทึกข้อมูลประจำห้อง ' + payload.room + ' ลงใน Google Sheets สำเร็จเรียบร้อยแล้ว!');
+            // รีเฟรชฐานข้อมูลประวัติหลังจากบันทึกใหม่
+            fetchHistoryFromSheets();
+        }).catch(err => {
+            alert('❌ เกิดข้อผิดพลาดในการส่งข้อมูล: ' + err);
+        });
+    }
+
+    // ฟังก์ชันใหม่: ดึงข้อมูลประวัติทั้งหมดจาก Sheets
+    function fetchHistoryFromSheets() {
+        let url = document.getElementById('webAppUrl').value;
+        if(!url) {
+            alert('❌ กรุณากรอก Web App URL ในแท็บตั้งค่า เพื่อใช้ดึงข้อมูลประวัติครับ');
+            return;
+        }
+
+        let tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดข้อมูลประวัติย้อนหลังจาก Google Sheets...</td></tr>`;
+
+        fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            globalHistoryData = data;
+            filterHistoryData();
+        })
+        .catch(err => {
+            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ ไม่สามารถโหลดข้อมูลได้ หรือคุณอาจจะยังไม่ได้อัปเดตโค้ด Apps Script ตัวใหม่: ${err}</td></tr>`;
+        });
+    }
+
+    // ฟังก์ชันใหม่: กรองข้อมูลเฉพาะห้องที่เลือก และแสดงบนตารางประวัติ
+    function filterHistoryData() {
+        let selectedRoom = document.getElementById('historyRoomSelect').value;
+        let tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = '';
+
+        // กรองเอาเฉพาะห้องที่ผู้ใช้เลือก
+        let filtered = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="11" style="color: #666; padding: 20px;">📅 ไม่พบประวัติการบันทึกข้อมูลของห้องหมายเลข ${selectedRoom}</td></tr>`;
+            return;
+        }
+
+        // วนลูปสร้างแถวในตารางย้อนหลัง
+        filtered.forEach(item => {
+            let tr = document.createElement('tr');
+            
+            // แปลงรูปแบบวันที่ให้อ่านง่ายขึ้น
+            let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
+
+            tr.innerHTML = `
+                <td>${dateStr}</td>
+                <td><b>${item.month || '-'}</b></td>
+                <td>${item.room}</td>
+                <td>${parseFloat(item.rent).toLocaleString()}</td>
+                <td>${item.waterUnit}</td>
+                <td>${parseFloat(item.waterTotal).toFixed(2)}</td>
+                <td>${item.elecUnit}</td>
+                <td>${parseFloat(item.elecTotal).toFixed(2)}</td>
+                <td>${parseFloat(item.internet).toFixed(2)}</td>
+                <td style="color:red;">-${parseFloat(item.discount).toFixed(2)}</td>
+                <td style="font-weight:bold; color:blue;">${parseFloat(item.grandTotal).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Initialize Bank Info Show
+    updateBankInfo();
+</script>
+
+</body>
+</html>"""
+
+with open("apartment_invoice_system_v2.html", "w", encoding="utf-8") as f:
+    f.write(updated_html_content)
+
+print("V2 system file written.")
