@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V6 (Supabase)</title>
+    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V6.1 (Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -192,7 +192,7 @@
         }
 
         .signature-area {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: center;
             float: right;
             width: 250px;
@@ -296,7 +296,7 @@
                             </select>
                         </div>
                         <div class="meta-item">
-                            <label>ประจำเดือน:</label>
+                            <label>วันที่ออกบิล:</label>
                             <input type="date" id="billingMonth" style="width: 160px; display: inline-block;">
                         </div>
                     </div>
@@ -370,7 +370,6 @@
             </table>
 
             <div class="invoice-footer">
-                <p style="font-weight: bold; margin: 0 0 5px 0;">* ชำระเงินทุกวันที่ 5 ของเดือน</p>
                 <p style="margin: 0;" id="bankInfoShow">บัญชีธนาคารสำหรับโอนเงิน: กำลังโหลด...</p>
                 
                 <div class="signature-area">
@@ -388,7 +387,7 @@
     </div>
 
     <div id="history-tab" class="tab-content">
-        <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง (ดึงข้อมูลจาก Supabase)</h3>
+        <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง</h3>
         
         <div class="filter-section">
             <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้อง:</label>
@@ -412,7 +411,7 @@
                 <thead>
                     <tr>
                         <th>วัน-เวลาที่บันทึก</th>
-                        <th>ประจำเดือน</th>
+                        <th>วันที่ออกบิล</th>
                         <th>ห้อง</th>
                         <th>ค่าเช่าห้อง</th>
                         <th>เลขมิเตอร์น้ำ (ก่อน/ล่าสุด)</th>
@@ -443,7 +442,7 @@
 
         <div class="config-group">
             <label>Supabase Anon API Key:</label>
-            <input type="text" id="supabaseKey" style="text-align: left;" placeholder="ใส่คีย์สาธารณะยาวๆ ของคุณที่นี่" oninput="saveSettings()">
+            <input type="text" id="supabaseKey" style="text-align: left;" placeholder="ใส่คีย์สาธารณะ sb_publishable_... หรือ anon ของคุณ" oninput="saveSettings()">
         </div>
 
         <div class="config-group">
@@ -544,6 +543,7 @@
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
 
+    // ฟังก์ชันจัดฟอร์แมตวันที่จากปฏิทิน (YYYY-MM-DD) ให้กลายเป็น DD/MM/YYYY ตัวเลขไทยสากล
     function formatDateToDMY(dateString) {
         if(!dateString) return '-';
         let parts = dateString.split('-');
@@ -551,12 +551,10 @@
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
-    // ฟังก์ชันฉลาด: ดึงเลขมิเตอร์ครั้งล่าสุดของห้องที่เลือกจากฐานข้อมูลมาตั้งค่าเป็นค่าเริ่มต้นอัตโนมัติ
     async function autoFetchLastMeter() {
         if (!supabaseClient) return;
         let currentRoom = document.getElementById('roomNo').value;
         
-        // ค้นหาข้อมูลล่าสุดของห้องนี้เรียงตามลำดับเวลาลงมา
         const { data, error } = await supabaseClient
             .from('room_records')
             .select('water_after, elec_after')
@@ -569,7 +567,6 @@
             document.getElementById('elecBefore').value = data[0].elec_after || 0;
             calculateInvoice();
         } else {
-            // ถ้าไม่เคยมีประวัติห้องนี้มาก่อนให้เซ็ตเป็น 0
             document.getElementById('waterBefore').value = 0;
             document.getElementById('elecBefore').value = 0;
             calculateInvoice();
@@ -580,8 +577,8 @@
         if(!supabaseClient) { return alert('❌ กรุณากรอก URL และ API Key ในแท็บตั้งค่าก่อนครับ!'); }
 
         let rawDate = document.getElementById('billingMonth').value;
-        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ประจำเดือนก่อนกดบันทึกครับ'); }
-        let formattedDate = formatDateToDMY(rawDate);
+        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); }
+        let formattedDate = formatDateToDMY(rawDate); // แปลงเป็น DD/MM/YYYY ก่อนส่งบันทึก
 
         let payload = {
             month: formattedDate,
@@ -605,7 +602,7 @@
         if (error) {
             alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
         } else {
-            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' เข้าฐานข้อมูลคลาวด์สำเร็จ และจำเลขมิเตอร์ล่าสุดเรียบร้อย!');
+            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ประจำวันที่ ' + formattedDate + ' สำเร็จ!');
         }
     }
 
