@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V6.1 (Supabase)</title>
+    <title>ระบบจัดการและออกบิลห้องเช่า V7.0 (Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -29,7 +29,7 @@
         }
 
         .container {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
         }
 
@@ -71,7 +71,7 @@
 
         .invoice-box {
             border: 1px solid var(--border-color);
-            padding: 20px;
+            padding: 25px;
             background: #fff;
             position: relative;
         }
@@ -81,8 +81,8 @@
             justify-content: space-between;
             align-items: flex-start;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
-            margin-bottom: 20px;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
         }
 
         .invoice-title {
@@ -95,7 +95,7 @@
         .meta-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 15px;
             margin-top: 10px;
         }
 
@@ -110,15 +110,15 @@
         .qr-section {
             text-align: center;
             border: 1px solid #ddd;
-            padding: 10px;
+            padding: 8px;
             background: #fafafa;
             border-radius: 4px;
-            width: 160px;
+            width: 150px;
         }
 
         .qr-placeholder {
-            width: 140px;
-            height: 140px;
+            width: 130px;
+            height: 130px;
             background: #eee;
             margin: 0 auto 5px auto;
             display: flex;
@@ -132,12 +132,12 @@
         table {
             width: 100%;
             border-collapse: collapse;
-            margin: 20px 0;
+            margin: 15px 0;
         }
 
         th, td {
             border: 1px solid #333;
-            padding: 10px;
+            padding: 8px 10px;
             text-align: center;
             font-size: 15px;
         }
@@ -186,13 +186,13 @@
         }
 
         .invoice-footer {
-            margin-top: 4px;
+            margin-top: 15px;
             border-top: 1px solid #333;
-            padding-top: 15px;
+            padding-top: 10px;
         }
 
         .signature-area {
-            margin-top: 30px;
+            margin-top: 10px;
             text-align: center;
             float: right;
             width: 250px;
@@ -218,12 +218,18 @@
             transition: background 0.2s;
         }
 
+        .btn:disabled {
+            background-color: #ccc;
+            color: #666;
+            cursor: not-allowed;
+        }
+
         .btn-primary {
             background-color: var(--primary-color);
             color: white;
         }
 
-        .btn-primary:hover {
+        .btn-primary:hover:not(:disabled) {
             background-color: var(--primary-hover);
         }
 
@@ -255,18 +261,62 @@
             gap: 15px;
         }
 
+        /* Pagination Style */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .page-info {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        /* CSS สำหรับโหมดพิมพ์แนวนอน 1 แผ่นพอดี */
         @media print {
-            body { background: white; padding: 0; }
-            .tabs, .btn-group, .filter-section, .config-group, h3, p { display: none !important; }
-            .tab-content { box-shadow: none; padding: 0; }
-            .invoice-box { border: none; }
+            @page {
+                size: landscape;
+                margin: 10mm;
+            }
+            body { 
+                background: white; 
+                padding: 0; 
+                color: #000;
+            }
+            .container {
+                max-width: 100%;
+            }
+            h2, .tabs, .btn-group, .filter-section, .config-group, h3, p:not(#bankInfoShow) { 
+                display: none !important; 
+            }
+            .tab-content { 
+                box-shadow: none; 
+                padding: 0; 
+            }
+            .invoice-box { 
+                border: none; 
+                padding: 0;
+                width: 100%;
+            }
+            th, td {
+                padding: 6px 8px; /* กระชับตารางเล็กลงในหน้าพิมพ์ */
+                font-size: 14px;
+            }
+            .grand-total {
+                font-size: 20px;
+            }
+            .signature-area {
+                margin-top: 5px;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>🏠 ระบบจัดการหอพัก & ฐานข้อมูลคลาวด์ Supabase</h2>
+    <h2>🏠 ระบบจัดการและออกบิลห้องเช่า</h2>
     
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('invoice-tab')">📝 ออกบิลค่าเช่า</button>
@@ -283,16 +333,16 @@
                         <div class="meta-item">
                             <label>ห้องที่:</label>
                             <select id="roomNo" style="width: 100px; display: inline-block;" onchange="autoFetchLastMeter()">
-                                <option value="101">101</option>
-                                <option value="102">102</option>
-                                <option value="103">103</option>
-                                <option value="104">104</option>
-                                <option value="105">105</option>
-                                <option value="106">106</option>
-                                <option value="107">107</option>
-                                <option value="108">108</option>
-                                <option value="109">109</option>
-                                <option value="110">110</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                                <option value="4">4</option>
+                                <option value="5">5</option>
+                                <option value="6">6</option>
+                                <option value="7">7</option>
+                                <option value="8">8</option>
+                                <option value="9">9</option>
+                                <option value="10">10</option>
                             </select>
                         </div>
                         <div class="meta-item">
@@ -391,17 +441,17 @@
         
         <div class="filter-section">
             <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้อง:</label>
-            <select id="historyRoomSelect" style="width: 120px;" onchange="filterHistoryData()">
-                <option value="101">101</option>
-                <option value="102">102</option>
-                <option value="103">103</option>
-                <option value="104">104</option>
-                <option value="105">105</option>
-                <option value="106">106</option>
-                <option value="107">107</option>
-                <option value="108">108</option>
-                <option value="109">109</option>
-                <option value="110">110</option>
+            <select id="historyRoomSelect" style="width: 120px;" onchange="resetPageAndFilter()">
+                <option value="1">1</option>
+                <option value="2">2</option>
+                <option value="3">3</option>
+                <option value="4">4</option>
+                <option value="5">5</option>
+                <option value="6">6</option>
+                <option value="7">7</option>
+                <option value="8">8</option>
+                <option value="9">9</option>
+                <option value="10">10</option>
             </select>
             <button class="btn btn-primary" onclick="fetchHistoryFromSupabase()" style="padding: 8px 16px; font-size: 14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
         </div>
@@ -429,6 +479,12 @@
                     </tr>
                 </tbody>
             </table>
+        </div>
+
+        <div class="pagination-container" id="paginationControls" style="display: none;">
+            <button class="btn btn-primary" id="btnPrev" onclick="changePage(-1)" style="padding: 8px 16px; font-size: 14px;">⬅️ หน้าก่อนหน้า</button>
+            <span class="page-info" id="pageInfo">หน้า 1 / 1</span>
+            <button class="btn btn-primary" id="btnNext" onclick="changePage(1)" style="padding: 8px 16px; font-size: 14px;">หน้าถัดไป ➡️</button>
         </div>
     </div>
 
@@ -460,6 +516,11 @@
 <script>
     let supabaseClient = null;
     let globalHistoryData = [];
+    
+    // ตัวแปรควบคุมระบบแบ่งหน้า (Pagination)
+    let currentPage = 1;
+    const rowsPerPage = 12;
+    let filteredData = [];
 
     window.onload = function() {
         if(localStorage.getItem('supabaseUrl')) document.getElementById('supabaseUrl').value = localStorage.getItem('supabaseUrl');
@@ -543,7 +604,6 @@
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
 
-    // ฟังก์ชันจัดฟอร์แมตวันที่จากปฏิทิน (YYYY-MM-DD) ให้กลายเป็น DD/MM/YYYY ตัวเลขไทยสากล
     function formatDateToDMY(dateString) {
         if(!dateString) return '-';
         let parts = dateString.split('-');
@@ -578,7 +638,7 @@
 
         let rawDate = document.getElementById('billingMonth').value;
         if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); }
-        let formattedDate = formatDateToDMY(rawDate); // แปลงเป็น DD/MM/YYYY ก่อนส่งบันทึก
+        let formattedDate = formatDateToDMY(rawDate);
 
         let payload = {
             month: formattedDate,
@@ -611,6 +671,7 @@
 
         let tbody = document.getElementById('historyTableBody');
         tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจากฐานข้อมูล Supabase...</td></tr>`;
+        document.getElementById('paginationControls').style.display = 'none';
 
         const { data, error } = await supabaseClient
             .from('room_records')
@@ -621,23 +682,46 @@
             tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
         } else {
             globalHistoryData = data;
-            filterHistoryData();
+            resetPageAndFilter();
         }
+    }
+
+    function resetPageAndFilter() {
+        currentPage = 1;
+        filterHistoryData();
     }
 
     function filterHistoryData() {
         let selectedRoom = document.getElementById('historyRoomSelect').value;
+        
+        // กรองข้อมูลตามห้องที่เลือก
+        filteredData = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
+        
+        displayHistoryPage();
+    }
+
+    function displayHistoryPage() {
         let tbody = document.getElementById('historyTableBody');
+        let selectedRoom = document.getElementById('historyRoomSelect').value;
         tbody.innerHTML = '';
 
-        let filtered = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
-
-        if (filtered.length === 0) {
+        if (filteredData.length === 0) {
             tbody.innerHTML = `<tr><td colspan="11" style="color: #666; padding: 20px;">📅 ไม่พบประวัติของห้อง ${selectedRoom}</td></tr>`;
+            document.getElementById('paginationControls').style.display = 'none';
             return;
         }
 
-        filtered.forEach(item => {
+        // คำนวณขอบเขตข้อมูลของหน้านั้นๆ (สูงสุด 12 แถว)
+        let totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        let start = (currentPage - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+        let pageData = filteredData.slice(start, end);
+
+        // แสดงผลข้อมูลลงในตาราง
+        pageData.forEach(item => {
             let tr = document.createElement('tr');
             let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
             
@@ -659,6 +743,19 @@
             `;
             tbody.appendChild(tr);
         });
+
+        // จัดการส่วนควบคุมการแบ่งหน้า (Pagination Controls)
+        document.getElementById('paginationControls').style.display = 'flex';
+        document.getElementById('pageInfo').innerText = `หน้า ${currentPage} / ${totalPages}`;
+        
+        // เปิด/ปิดการทำงานของปุ่มควบคุมตามความเหมาะสม
+        document.getElementById('btnPrev').disabled = (currentPage === 1);
+        document.getElementById('btnNext').disabled = (currentPage === totalPages);
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayHistoryPage();
     }
 </script>
 </body>
