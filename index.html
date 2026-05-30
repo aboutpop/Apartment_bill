@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V5.1</title>
+    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V6 (Supabase)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary-color: #2b579a;
@@ -68,7 +69,6 @@
             display: block;
         }
 
-        /* Invoice Style */
         .invoice-box {
             border: 1px solid var(--border-color);
             padding: 20px;
@@ -161,7 +161,6 @@
             font-size: 15px;
         }
 
-        /* เอาปุ่มลูกศร Up-Down Controls ออกจากช่องตัวเลข */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -258,7 +257,7 @@
 
         @media print {
             body { background: white; padding: 0; }
-            .tabs, .btn-group, .instruction-card, .filter-section, .config-group, h3, p { display: none !important; }
+            .tabs, .btn-group, .filter-section, .config-group, h3, p { display: none !important; }
             .tab-content { box-shadow: none; padding: 0; }
             .invoice-box { border: none; }
         }
@@ -267,12 +266,12 @@
 <body>
 
 <div class="container">
-    <h2>🏠 ระบบจัดการหอพัก & ส่งข้อมูลเข้า Google Sheets</h2>
+    <h2>🏠 ระบบจัดการหอพัก & ฐานข้อมูลคลาวด์ Supabase</h2>
     
     <div class="tabs">
         <button class="tab-btn active" onclick="switchTab('invoice-tab')">📝 ออกบิลค่าเช่า</button>
         <button class="tab-btn" onclick="switchTab('history-tab')">📊 ประวัติข้อมูลรายห้อง</button>
-        <button class="tab-btn" onclick="switchTab('config-tab')">⚙️ ตั้งค่าระบบ & เชื่อมต่อหลังบ้าน</button>
+        <button class="tab-btn" onclick="switchTab('config-tab')">⚙️ ตั้งค่าระบบ & เชื่อมต่อฐานข้อมูล</button>
     </div>
 
     <div id="invoice-tab" class="tab-content active">
@@ -283,7 +282,7 @@
                     <div class="meta-grid">
                         <div class="meta-item">
                             <label>ห้องที่:</label>
-                            <select id="roomNo" style="width: 100px; display: inline-block;">
+                            <select id="roomNo" style="width: 100px; display: inline-block;" onchange="autoFetchLastMeter()">
                                 <option value="101">101</option>
                                 <option value="102">102</option>
                                 <option value="103">103</option>
@@ -305,7 +304,7 @@
                 
                 <div class="qr-section">
                     <div class="qr-placeholder" id="qrContainer">
-                        <span style="padding: 10px;">[ แนบรูป QR Code ที่นี่ ]</span>
+                        <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
                     </div>
                     <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
                 </div>
@@ -384,16 +383,15 @@
 
         <div class="btn-group">
             <button class="btn btn-primary" onclick="window.print()">🖨️ บันทึกเป็นไฟล์ PDF</button>
-            <button class="btn btn-success" onclick="sendDataToSheets()">💾 บันทึกข้อมูลลง Google Sheets</button>
+            <button class="btn btn-success" onclick="sendDataToSupabase()">💾 บันทึกข้อมูลลงฐานข้อมูลคลาวด์</button>
         </div>
     </div>
 
     <div id="history-tab" class="tab-content">
-        <h3>📊 ตารางประวัติข้อมูลและรายการย้อนหลังรายห้อง</h3>
-        <p>คุณสามารถเรียกดูสรุปค่าเช่า ค่าน้ำ ค่าไฟ ย้อนหลังของแต่ละห้องพักได้จากตารางนี้</p>
+        <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง (ดึงข้อมูลจาก Supabase)</h3>
         
         <div class="filter-section">
-            <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้องที่ต้องการเรียกดู:</label>
+            <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้อง:</label>
             <select id="historyRoomSelect" style="width: 120px;" onchange="filterHistoryData()">
                 <option value="101">101</option>
                 <option value="102">102</option>
@@ -406,7 +404,7 @@
                 <option value="109">109</option>
                 <option value="110">110</option>
             </select>
-            <button class="btn btn-primary" onclick="fetchHistoryFromSheets()" style="padding: 8px 16px; font-size: 14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
+            <button class="btn btn-primary" onclick="fetchHistoryFromSupabase()" style="padding: 8px 16px; font-size: 14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
         </div>
 
         <div style="overflow-x: auto;">
@@ -428,7 +426,7 @@
                 </thead>
                 <tbody id="historyTableBody">
                     <tr>
-                        <td colspan="11" style="color: #666; padding: 20px;">ยังไม่มีข้อมูล หรือกรุณากดปุ่มเพื่อดึงข้อมูลจากหลังบ้าน</td>
+                        <td colspan="11" style="color: #666; padding: 20px;">ยังไม่มีข้อมูล หรือกรุณากดดึงข้อมูล</td>
                     </tr>
                 </tbody>
             </table>
@@ -436,11 +434,16 @@
     </div>
 
     <div id="config-tab" class="tab-content">
-        <h3>⚙️ ตั้งค่าการเชื่อมต่อ Google Sheets & ข้อมูลที่พัก</h3>
+        <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
         
         <div class="config-group">
-            <label>Google Web App URL (ได้จาก Apps Script):</label>
-            <input type="text" id="webAppUrl" style="text-align: left;" oninput="saveSettings()">
+            <label>Supabase URL:</label>
+            <input type="text" id="supabaseUrl" style="text-align: left;" placeholder="https://xyz.supabase.co" oninput="saveSettings()">
+        </div>
+
+        <div class="config-group">
+            <label>Supabase Anon API Key:</label>
+            <input type="text" id="supabaseKey" style="text-align: left;" placeholder="ใส่คีย์สาธารณะยาวๆ ของคุณที่นี่" oninput="saveSettings()">
         </div>
 
         <div class="config-group">
@@ -456,18 +459,14 @@
 </div>
 
 <script>
+    let supabaseClient = null;
     let globalHistoryData = [];
 
     window.onload = function() {
-        if(localStorage.getItem('webAppUrl')) {
-            document.getElementById('webAppUrl').value = localStorage.getItem('webAppUrl');
-        }
-        if(localStorage.getItem('bankInfo')) {
-            document.getElementById('bankInfoInput').value = localStorage.getItem('bankInfo');
-        }
-        if(localStorage.getItem('qrUrl')) {
-            document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
-        }
+        if(localStorage.getItem('supabaseUrl')) document.getElementById('supabaseUrl').value = localStorage.getItem('supabaseUrl');
+        if(localStorage.getItem('supabaseKey')) document.getElementById('supabaseKey').value = localStorage.getItem('supabaseKey');
+        if(localStorage.getItem('bankInfo')) document.getElementById('bankInfoInput').value = localStorage.getItem('bankInfo');
+        if(localStorage.getItem('qrUrl')) document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
         
         let today = new Date();
         let yyyy = today.getFullYear();
@@ -475,14 +474,26 @@
         let dd = String(today.getDate()).padStart(2, '0');
         document.getElementById('billingMonth').value = `${yyyy}-${mm}-${dd}`;
 
+        initSupabase();
         updateDisplayFromSettings();
         calculateInvoice();
+        autoFetchLastMeter();
     };
 
+    function initSupabase() {
+        let url = document.getElementById('supabaseUrl').value.trim();
+        let key = document.getElementById('supabaseKey').value.trim();
+        if(url && key) {
+            supabaseClient = supabase.createClient(url, key);
+        }
+    }
+
     function saveSettings() {
-        localStorage.setItem('webAppUrl', document.getElementById('webAppUrl').value);
+        localStorage.setItem('supabaseUrl', document.getElementById('supabaseUrl').value);
+        localStorage.setItem('supabaseKey', document.getElementById('supabaseKey').value);
         localStorage.setItem('bankInfo', document.getElementById('bankInfoInput').value);
         localStorage.setItem('qrUrl', document.getElementById('qrUrlInput').value);
+        initSupabase();
         updateDisplayFromSettings();
     }
 
@@ -493,7 +504,7 @@
         if(qrUrl) {
             container.innerHTML = `<img src="${qrUrl}" style="width:100%; height:100%; object-fit:contain;">`;
         } else {
-            container.innerHTML = `<span style="padding: 10px;">[ แนบรูป QR Code ที่นี่ ]</span>`;
+            container.innerHTML = `<span style="padding: 10px;">[ แนบรูป QR Code ]</span>`;
         }
     }
 
@@ -504,8 +515,7 @@
         if (event) event.currentTarget.classList.add('active');
         
         if (tabId === 'history-tab') {
-            let url = document.getElementById('webAppUrl').value;
-            if (url) fetchHistoryFromSheets();
+            fetchHistoryFromSupabase();
         }
     }
 
@@ -541,66 +551,81 @@
         return `${parts[2]}/${parts[1]}/${parts[0]}`;
     }
 
-    function sendDataToSheets() {
-        let url = document.getElementById('webAppUrl').value;
-        if(!url) { return alert('❌ กรุณากรอก Web App URL ในแท็บตั้งค่าก่อนครับ!'); }
+    // ฟังก์ชันฉลาด: ดึงเลขมิเตอร์ครั้งล่าสุดของห้องที่เลือกจากฐานข้อมูลมาตั้งค่าเป็นค่าเริ่มต้นอัตโนมัติ
+    async function autoFetchLastMeter() {
+        if (!supabaseClient) return;
+        let currentRoom = document.getElementById('roomNo').value;
+        
+        // ค้นหาข้อมูลล่าสุดของห้องนี้เรียงตามลำดับเวลาลงมา
+        const { data, error } = await supabaseClient
+            .from('room_records')
+            .select('water_after, elec_after')
+            .eq('room', currentRoom)
+            .order('id', { ascending: false })
+            .limit(1);
+
+        if (data && data.length > 0) {
+            document.getElementById('waterBefore').value = data[0].water_after || 0;
+            document.getElementById('elecBefore').value = data[0].elec_after || 0;
+            calculateInvoice();
+        } else {
+            // ถ้าไม่เคยมีประวัติห้องนี้มาก่อนให้เซ็ตเป็น 0
+            document.getElementById('waterBefore').value = 0;
+            document.getElementById('elecBefore').value = 0;
+            calculateInvoice();
+        }
+    }
+
+    async function sendDataToSupabase() {
+        if(!supabaseClient) { return alert('❌ กรุณากรอก URL และ API Key ในแท็บตั้งค่าก่อนครับ!'); }
 
         let rawDate = document.getElementById('billingMonth').value;
+        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ประจำเดือนก่อนกดบันทึกครับ'); }
         let formattedDate = formatDateToDMY(rawDate);
 
         let payload = {
             month: formattedDate,
             room: document.getElementById('roomNo').value,
             rent: parseFloat(document.getElementById('rentAmount').value) || 0,
-            waterUnit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
-            waterTotal: parseFloat(document.getElementById('waterTotal').innerText) || 0,
-            waterAfter: parseFloat(document.getElementById('waterAfter').value) || 0, 
-            elecUnit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
-            elecTotal: parseFloat(document.getElementById('elecTotal').innerText) || 0,
-            elecAfter: parseFloat(document.getElementById('elecAfter').value) || 0,   
+            water_unit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
+            water_total: parseFloat(document.getElementById('waterTotal').innerText) || 0,
+            water_after: parseFloat(document.getElementById('waterAfter').value) || 0, 
+            elec_unit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
+            elec_total: parseFloat(document.getElementById('elecTotal').innerText) || 0,
+            elec_after: parseFloat(document.getElementById('elecAfter').value) || 0,   
             internet: parseFloat(document.getElementById('internetAmount').value) || 0,
             discount: parseFloat(document.getElementById('discountAmount').value) || 0,
-            grandTotal: parseFloat(document.getElementById('grandTotal').innerText) || 0
+            grand_total: parseFloat(document.getElementById('grandTotal').innerText) || 0
         };
 
-        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ประจำเดือนก่อนกดบันทึกครับ'); }
+        const { data, error } = await supabaseClient
+            .from('room_records')
+            .insert([payload]);
 
-        fetch(url, {
-            method: 'POST',
-            mode: 'no-cors',
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).then(() => {
-            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' เรียบร้อยและจัดเก็บเลขมิเตอร์ล่าสุดสำเร็จ!');
-        }).catch(err => { alert('❌ เกิดข้อผิดพลาด: ' + err); });
+        if (error) {
+            alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+        } else {
+            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' เข้าฐานข้อมูลคลาวด์สำเร็จ และจำเลขมิเตอร์ล่าสุดเรียบร้อย!');
+        }
     }
 
-    function fetchHistoryFromSheets() {
-        let url = document.getElementById('webAppUrl').value;
-        if(!url) return;
+    async function fetchHistoryFromSupabase() {
+        if(!supabaseClient) return;
 
         let tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจาก Google Sheets...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจากฐานข้อมูล Supabase...</td></tr>`;
 
-        // เพิ่มการตั้งค่าเพื่อแก้ปัญหาการดึงข้อมูลและหลีกเลี่ยงการถูกแคชหรือติดบล็อกจากบราวเซอร์
-        fetch(url, {
-            method: 'GET',
-            cache: 'no-cache'
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(data => {
+        const { data, error } = await supabaseClient
+            .from('room_records')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) {
+            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+        } else {
             globalHistoryData = data;
             filterHistoryData();
-        })
-        .catch(err => {
-            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาดในการโหลด: ${err.message || err} (กรุณาตรวจสอบว่าได้เปิด Deploy เวอร์ชันใหม่บน Apps Script หรือยัง)</td></tr>`;
-        });
+        }
     }
 
     function filterHistoryData() {
@@ -619,21 +644,21 @@
             let tr = document.createElement('tr');
             let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
             
-            let wBeforeShow = (parseFloat(item.waterAfter) - parseFloat(item.waterUnit)) || 0;
-            let eBeforeShow = (parseFloat(item.elecAfter) - parseFloat(item.elecUnit)) || 0;
+            let wBeforeShow = (parseFloat(item.water_after) - parseFloat(item.water_unit)) || 0;
+            let eBeforeShow = (parseFloat(item.elec_after) - parseFloat(item.elec_unit)) || 0;
 
             tr.innerHTML = `
                 <td>${dateStr}</td>
                 <td><b>${item.month || '-'}</b></td>
                 <td>${item.room}</td>
                 <td>${parseFloat(item.rent).toLocaleString()}</td>
-                <td>${wBeforeShow} ➔ <b>${item.waterAfter}</b> (${item.waterUnit} หน่วย)</td>
-                <td>${parseFloat(item.waterTotal).toFixed(2)}</td>
-                <td>${eBeforeShow} ➔ <b>${item.elecAfter}</b> (${item.elecUnit} หน่วย)</td>
-                <td>${parseFloat(item.elecTotal).toFixed(2)}</td>
+                <td>${wBeforeShow} ➔ <b>${item.water_after}</b> (${item.water_unit} หน่วย)</td>
+                <td>${parseFloat(item.water_total).toFixed(2)}</td>
+                <td>${eBeforeShow} ➔ <b>${item.elec_after}</b> (${item.elec_unit} หน่วย)</td>
+                <td>${parseFloat(item.elec_total).toFixed(2)}</td>
                 <td>${parseFloat(item.internet).toFixed(2)}</td>
                 <td style="color:red;">-${parseFloat(item.discount).toFixed(2)}</td>
-                <td style="font-weight:bold; color:blue;">${parseFloat(item.grandTotal).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+                <td style="font-weight:bold; color:blue;">${parseFloat(item.grand_total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
             `;
             tbody.appendChild(tr);
         });
