@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการและออกบิลห้องเช่า V9.0 (Auth + Supabase)</title>
+    <title>ระบบจัดการและออกบิลห้องเช่า V9.1 (Auth + Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -192,7 +192,28 @@
             width: 150px;
         }
 
-        .logo-placeholder, .qr-placeholder {
+        /* ปรับปรุงกล่องโลโก้ให้ไม่มีช่องว่างข้อความด้านล่าง เพื่อให้รูปขยายใหญ่ได้เต็มที่ */
+        .logo-section {
+            padding: 4px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .logo-placeholder {
+            width: 140px;
+            height: 140px;
+            background: #eee;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: #666;
+            border: 1px dashed #999;
+        }
+
+        .qr-placeholder {
             width: 130px;
             height: 130px;
             background: #eee;
@@ -465,18 +486,17 @@
                     </div>
                     
                     <div class="image-right-section">
-                        <div class="logo-section">
-                            <div class="logo-placeholder" id="logoContainer">
-                                <span style="padding: 10px;">[ แนบรูปโลโก้หอพัก ]</span>
-                            </div>
-                            <div style="font-size: 12px; font-weight: bold; color: #333;">โลโก้หอพัก</div>
-                        </div>
-
                         <div class="qr-section">
                             <div class="qr-placeholder" id="qrContainer">
                                 <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
                             </div>
                             <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
+                        </div>
+
+                        <div class="logo-section">
+                            <div class="logo-placeholder" id="logoContainer">
+                                <span style="padding: 10px;">[ แนบรูปโลโก้ ]</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -655,7 +675,6 @@
         if(localStorage.getItem('logoUrl')) document.getElementById('logoUrlInput').value = localStorage.getItem('logoUrl');
         if(localStorage.getItem('qrUrl')) document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
         
-        // ตั้งค่าวันที่เริ่มต้นเป็นวันปัจจุบัน
         let today = new Date();
         let yyyy = today.getFullYear();
         let mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -678,7 +697,6 @@
         }
     }
 
-    // ฟังก์ชันจัดรูปแบบการแสดงผลวันที่เป็น DD/MM/YYYY ใน UI หน้าบ้าน
     function updateDateDisplay(input) {
         if(input.value) {
             let parts = input.value.split('-');
@@ -760,16 +778,14 @@
     function updateDisplayFromSettings() {
         document.getElementById('bankInfoShow').innerText = "บัญชีธนาคารสำหรับโอนเงิน: " + document.getElementById('bankInfoInput').value;
         
-        // อัปเดตรูปโลโก้
         let logoUrl = document.getElementById('logoUrlInput').value;
         let logoContainer = document.getElementById('logoContainer');
         if(logoUrl) {
             logoContainer.innerHTML = `<img src="${logoUrl}" style="width:100%; height:100%; object-fit:contain;">`;
         } else {
-            logoContainer.innerHTML = `<span style="padding: 10px;">[ แนบรูปโลโก้หอพัก ]</span>`;
+            logoContainer.innerHTML = `<span style="padding: 10px;">[ แนบรูปโลโก้ ]</span>`;
         }
 
-        // อัปเดตรูป QR Code
         let qrUrl = document.getElementById('qrUrlInput').value;
         let qrContainer = document.getElementById('qrContainer');
         if(qrUrl) {
@@ -805,162 +821,4 @@
 
         let eBefore = parseFloat(document.getElementById('elecBefore').value) || 0;
         let eAfter = parseFloat(document.getElementById('elecAfter').value) || 0;
-        let eRate = parseFloat(document.getElementById('elecRate').value) || 0;
-        let eUnit = eAfter >= eBefore ? eAfter - eBefore : 0;
-        let eTotal = eUnit * eRate;
-        document.getElementById('elecUnit').innerText = eUnit;
-        document.getElementById('elecTotal').innerText = eTotal.toFixed(2);
-
-        let total = (rent + wTotal + eTotal + internet) - discount;
-        document.getElementById('grandTotal').innerText = total.toFixed(2);
-    }
-
-    function formatDateToDMY(dateString) {
-        if(!dateString) return '-';
-        let parts = dateString.split('-');
-        if(parts.length !== 3) return dateString;
-        return `${parts[2]}/${parts[1]}/${parts[0]}`;
-    }
-
-    async function autoFetchLastMeter() {
-        if (!supabaseClient) return;
-        let currentRoom = document.getElementById('roomNo').value;
-        
-        const { data, error } = await supabaseClient
-            .from('room_records')
-            .select('water_after, elec_after')
-            .eq('room', currentRoom)
-            .order('id', { ascending: false })
-            .limit(1);
-
-        if (data && data.length > 0) {
-            document.getElementById('waterBefore').value = data[0].water_after || 0;
-            document.getElementById('elecBefore').value = data[0].elec_after || 0;
-            calculateInvoice();
-        } else {
-            document.getElementById('waterBefore').value = 0;
-            document.getElementById('elecBefore').value = 0;
-            calculateInvoice();
-        }
-    }
-
-    async function sendDataToSupabase() {
-        if(!supabaseClient) { return alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ!'); }
-
-        let rawDate = document.getElementById('billingMonth').value;
-        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); }
-        let formattedDate = formatDateToDMY(rawDate);
-
-        let payload = {
-            month: formattedDate,
-            room: document.getElementById('roomNo').value,
-            rent: parseFloat(document.getElementById('rentAmount').value) || 0,
-            water_unit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
-            water_total: parseFloat(document.getElementById('waterTotal').innerText) || 0,
-            water_after: parseFloat(document.getElementById('waterAfter').value) || 0, 
-            elec_unit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
-            elec_total: parseFloat(document.getElementById('elecTotal').innerText) || 0,
-            elec_after: parseFloat(document.getElementById('elecAfter').value) || 0,   
-            internet: parseFloat(document.getElementById('internetAmount').value) || 0,
-            discount: parseFloat(document.getElementById('discountAmount').value) || 0,
-            grand_total: parseFloat(document.getElementById('grandTotal').innerText) || 0
-        };
-
-        const { data, error } = await supabaseClient
-            .from('room_records')
-            .insert([payload]);
-
-        if (error) {
-            alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
-        } else {
-            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ประจำวันที่ ' + formattedDate + ' สำเร็จ!');
-        }
-    }
-
-    async function fetchHistoryFromSupabase() {
-        if(!supabaseClient) return;
-
-        let tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจากฐานข้อมูล Supabase...</td></tr>`;
-        document.getElementById('paginationControls').style.display = 'none';
-
-        const { data, error } = await supabaseClient
-            .from('room_records')
-            .select('*')
-            .order('id', { ascending: false });
-
-        if (error) {
-            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
-        } else {
-            globalHistoryData = data;
-            resetPageAndFilter();
-        }
-    }
-
-    function resetPageAndFilter() {
-        currentPage = 1;
-        filterHistoryData();
-    }
-
-    function filterHistoryData() {
-        let selectedRoom = document.getElementById('historyRoomSelect').value;
-        filteredData = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
-        displayHistoryPage();
-    }
-
-    function displayHistoryPage() {
-        let tbody = document.getElementById('historyTableBody');
-        let selectedRoom = document.getElementById('historyRoomSelect').value;
-        tbody.innerHTML = '';
-
-        if (filteredData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="11" style="color: #666; padding: 20px;">📅 ไม่พบประวัติของห้อง ${selectedRoom}</td></tr>`;
-            document.getElementById('paginationControls').style.display = 'none';
-            return;
-        }
-
-        let totalPages = Math.ceil(filteredData.length / rowsPerPage);
-        if (currentPage > totalPages) currentPage = totalPages;
-        if (currentPage < 1) currentPage = 1;
-
-        let start = (currentPage - 1) * rowsPerPage;
-        let end = start + rowsPerPage;
-        let pageData = filteredData.slice(start, end);
-
-        pageData.forEach(item => {
-            let tr = document.createElement('tr');
-            let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
-            
-            let wBeforeShow = (parseFloat(item.water_after) - parseFloat(item.water_unit)) || 0;
-            let eBeforeShow = (parseFloat(item.elec_after) - parseFloat(item.elec_unit)) || 0;
-
-            tr.innerHTML = `
-                <td>${dateStr}</td>
-                <td><b>${item.month || '-'}</b></td>
-                <td>${item.room}</td>
-                <td>${parseFloat(item.rent).toLocaleString()}</td>
-                <td>${wBeforeShow} ➔ <b>${item.water_after}</b> (${item.water_unit} หน่วย)</td>
-                <td>${parseFloat(item.water_total).toFixed(2)}</td>
-                <td>${eBeforeShow} ➔ <b>${item.elec_after}</b> (${item.elec_unit} หน่วย)</td>
-                <td>${parseFloat(item.elec_total).toFixed(2)}</td>
-                <td>${parseFloat(item.internet).toFixed(2)}</td>
-                <td style="color:red;">-${parseFloat(item.discount).toFixed(2)}</td>
-                <td style="font-weight:bold; color:blue;">${parseFloat(item.grand_total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
-            `;
-            tbody.appendChild(tr);
-        });
-
-        document.getElementById('paginationControls').style.display = 'flex';
-        document.getElementById('pageInfo').innerText = `หน้า ${currentPage} / ${totalPages}`;
-        
-        document.getElementById('btnPrev').disabled = (currentPage === 1);
-        document.getElementById('btnNext').disabled = (currentPage === totalPages);
-    }
-
-    function changePage(direction) {
-        currentPage += direction;
-        displayHistoryPage();
-    }
-</script>
-</body>
-</html>
+        let eRate = parseFloat(document.getElementById
