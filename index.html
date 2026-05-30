@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V4</title>
+    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V5</title>
     <style>
         :root {
             --primary-color: #2b579a;
@@ -417,9 +417,9 @@
                         <th>ประจำเดือน</th>
                         <th>ห้อง</th>
                         <th>ค่าเช่าห้อง</th>
-                        <th>หน่วยน้ำที่ใช้</th>
+                        <th>เลขมิเตอร์น้ำ (ก่อน/ล่าสุด)</th>
                         <th>รวมค่าน้ำ</th>
-                        <th>หน่วยไฟที่ใช้</th>
+                        <th>เลขมิเตอร์ไฟ (ก่อน/ล่าสุด)</th>
                         <th>รวมค่าไฟ</th>
                         <th>อื่นๆ</th>
                         <th>ส่วนลด</th>
@@ -536,7 +536,6 @@
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
 
-    // ฟังก์ชันแปลงรูปแบบวันที่จาก yyyy-mm-dd ไปเป็น dd/mm/yyyy
     function formatDateToDMY(dateString) {
         if(!dateString) return '-';
         let parts = dateString.split('-');
@@ -549,16 +548,19 @@
         if(!url) { return alert('❌ กรุณากรอก Web App URL ในแท็บตั้งค่าก่อนครับ!'); }
 
         let rawDate = document.getElementById('billingMonth').value;
-        let formattedDate = formatDateToDMY(rawDate); // แปลงเป็น dd/mm/yyyy ก่อนบันทึกลง Sheets
+        let formattedDate = formatDateToDMY(rawDate);
 
+        // ดึงค่าเลขมิเตอร์ครั้งล่าสุด (After) เพิ่มเข้าไปใน payload เพื่อส่งไปบันทึก
         let payload = {
             month: formattedDate,
             room: document.getElementById('roomNo').value,
             rent: parseFloat(document.getElementById('rentAmount').value) || 0,
             waterUnit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
             waterTotal: parseFloat(document.getElementById('waterTotal').innerText) || 0,
+            waterAfter: parseFloat(document.getElementById('waterAfter').value) || 0, // เพิ่มข้อมูลมิเตอร์น้ำล่าสุด
             elecUnit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
             elecTotal: parseFloat(document.getElementById('elecTotal').innerText) || 0,
+            elecAfter: parseFloat(document.getElementById('elecAfter').value) || 0,   // เพิ่มข้อมูลมิเตอร์ไฟล่าสุด
             internet: parseFloat(document.getElementById('internetAmount').value) || 0,
             discount: parseFloat(document.getElementById('discountAmount').value) || 0,
             grandTotal: parseFloat(document.getElementById('grandTotal').innerText) || 0
@@ -573,7 +575,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(() => {
-            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ประจำวันที่ ' + formattedDate + ' ลง Sheets สำเร็จ!');
+            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' เรียบร้อยและจัดเก็บเลขมิเตอร์ล่าสุดสำเร็จ!');
             fetchHistoryFromSheets();
         }).catch(err => { alert('❌ เกิดข้อผิดพลาด: ' + err); });
     }
@@ -611,14 +613,19 @@
         filtered.forEach(item => {
             let tr = document.createElement('tr');
             let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
+            
+            // คํานวณเลขครั้งก่อน (ดึงจากมิเตอร์ล่าสุด ลบ หน่วยที่ใช้) เพื่อนำมาโชว์ในตารางประวัติย้อนหลัง
+            let wBeforeShow = (parseFloat(item.waterAfter) - parseFloat(item.waterUnit)) || 0;
+            let eBeforeShow = (parseFloat(item.elecAfter) - parseFloat(item.elecUnit)) || 0;
+
             tr.innerHTML = `
                 <td>${dateStr}</td>
                 <td><b>${item.month || '-'}</b></td>
                 <td>${item.room}</td>
                 <td>${parseFloat(item.rent).toLocaleString()}</td>
-                <td>${item.waterUnit}</td>
+                <td>${wBeforeShow} ➔ <b>${item.waterAfter}</b> (${item.waterUnit} หน่วย)</td>
                 <td>${parseFloat(item.waterTotal).toFixed(2)}</td>
-                <td>${item.elecUnit}</td>
+                <td>${eBeforeShow} ➔ <b>${item.elecAfter}</b> (${item.elecUnit} หน่วย)</td>
                 <td>${parseFloat(item.elecTotal).toFixed(2)}</td>
                 <td>${parseFloat(item.internet).toFixed(2)}</td>
                 <td style="color:red;">-${parseFloat(item.discount).toFixed(2)}</td>
