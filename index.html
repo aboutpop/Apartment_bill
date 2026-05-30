@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V5</title>
+    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V5.1</title>
     <style>
         :root {
             --primary-color: #2b579a;
@@ -458,7 +458,6 @@
 <script>
     let globalHistoryData = [];
 
-    // โหลดข้อมูลอัตโนมัติและตั้งค่าเริ่มต้นปฏิทิน
     window.onload = function() {
         if(localStorage.getItem('webAppUrl')) {
             document.getElementById('webAppUrl').value = localStorage.getItem('webAppUrl');
@@ -470,7 +469,6 @@
             document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
         }
         
-        // ตั้งค่าวันที่ปัจจุบันในปฏิทินช่อง "ประจำเดือน:"
         let today = new Date();
         let yyyy = today.getFullYear();
         let mm = String(today.getMonth() + 1).padStart(2, '0');
@@ -505,7 +503,7 @@
         document.getElementById(tabId).classList.add('active');
         if (event) event.currentTarget.classList.add('active');
         
-        if (tabId === 'history-tab' && globalHistoryData.length === 0) {
+        if (tabId === 'history-tab') {
             let url = document.getElementById('webAppUrl').value;
             if (url) fetchHistoryFromSheets();
         }
@@ -550,17 +548,16 @@
         let rawDate = document.getElementById('billingMonth').value;
         let formattedDate = formatDateToDMY(rawDate);
 
-        // ดึงค่าเลขมิเตอร์ครั้งล่าสุด (After) เพิ่มเข้าไปใน payload เพื่อส่งไปบันทึก
         let payload = {
             month: formattedDate,
             room: document.getElementById('roomNo').value,
             rent: parseFloat(document.getElementById('rentAmount').value) || 0,
             waterUnit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
             waterTotal: parseFloat(document.getElementById('waterTotal').innerText) || 0,
-            waterAfter: parseFloat(document.getElementById('waterAfter').value) || 0, // เพิ่มข้อมูลมิเตอร์น้ำล่าสุด
+            waterAfter: parseFloat(document.getElementById('waterAfter').value) || 0, 
             elecUnit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
             elecTotal: parseFloat(document.getElementById('elecTotal').innerText) || 0,
-            elecAfter: parseFloat(document.getElementById('elecAfter').value) || 0,   // เพิ่มข้อมูลมิเตอร์ไฟล่าสุด
+            elecAfter: parseFloat(document.getElementById('elecAfter').value) || 0,   
             internet: parseFloat(document.getElementById('internetAmount').value) || 0,
             discount: parseFloat(document.getElementById('discountAmount').value) || 0,
             grandTotal: parseFloat(document.getElementById('grandTotal').innerText) || 0
@@ -576,25 +573,33 @@
             body: JSON.stringify(payload)
         }).then(() => {
             alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' เรียบร้อยและจัดเก็บเลขมิเตอร์ล่าสุดสำเร็จ!');
-            fetchHistoryFromSheets();
         }).catch(err => { alert('❌ เกิดข้อผิดพลาด: ' + err); });
     }
 
     function fetchHistoryFromSheets() {
         let url = document.getElementById('webAppUrl').value;
-        if(!url) { return alert('❌ กรุณากรอก Web App URL ในแท็บตั้งค่าก่อนครับ'); }
+        if(!url) return;
 
         let tbody = document.getElementById('historyTableBody');
         tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจาก Google Sheets...</td></tr>`;
 
-        fetch(url)
-        .then(response => response.json())
+        // เพิ่มการตั้งค่าเพื่อแก้ปัญหาการดึงข้อมูลและหลีกเลี่ยงการถูกแคชหรือติดบล็อกจากบราวเซอร์
+        fetch(url, {
+            method: 'GET',
+            cache: 'no-cache'
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
         .then(data => {
             globalHistoryData = data;
             filterHistoryData();
         })
         .catch(err => {
-            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาดในการโหลด: ${err}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาดในการโหลด: ${err.message || err} (กรุณาตรวจสอบว่าได้เปิด Deploy เวอร์ชันใหม่บน Apps Script หรือยัง)</td></tr>`;
         });
     }
 
@@ -614,7 +619,6 @@
             let tr = document.createElement('tr');
             let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
             
-            // คํานวณเลขครั้งก่อน (ดึงจากมิเตอร์ล่าสุด ลบ หน่วยที่ใช้) เพื่อนำมาโชว์ในตารางประวัติย้อนหลัง
             let wBeforeShow = (parseFloat(item.waterAfter) - parseFloat(item.waterUnit)) || 0;
             let eBeforeShow = (parseFloat(item.elecAfter) - parseFloat(item.elecUnit)) || 0;
 
