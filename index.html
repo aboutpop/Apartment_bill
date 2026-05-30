@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V3 (สมบูรณ์แบบ)</title>
+    <title>ระบบบริหารจัดการและออกบิลค่าเช่าหอพัก V4</title>
     <style>
         :root {
             --primary-color: #2b579a;
@@ -152,13 +152,23 @@
             font-weight: bold;
         }
 
-        input[type="number"], input[type="text"], select {
+        input[type="number"], input[type="text"], input[type="date"], select {
             width: 100%;
             padding: 6px;
             border: 1px solid #bbb;
             border-radius: 4px;
             text-align: center;
             font-size: 15px;
+        }
+
+        /* เอาปุ่มลูกศร Up-Down Controls ออกจากช่องตัวเลข */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
         }
 
         input:focus, select:focus {
@@ -288,7 +298,7 @@
                         </div>
                         <div class="meta-item">
                             <label>ประจำเดือน:</label>
-                            <input type="text" id="billingMonth" placeholder="เช่น มกราคม 2026" style="width: 150px; display: inline-block;">
+                            <input type="date" id="billingMonth" style="width: 160px; display: inline-block;">
                         </div>
                     </div>
                 </div>
@@ -319,14 +329,14 @@
                         <td>-</td>
                         <td>-</td>
                         <td>-</td>
-                        <td><input type="number" id="rentAmount" value="3500" oninput="calculateInvoice()"></td>
+                        <td><input type="number" id="rentAmount" value="2500" oninput="calculateInvoice()"></td>
                     </tr>
                     <tr>
                         <td class="left">ค่าน้ำ</td>
                         <td><input type="number" id="waterBefore" value="0" oninput="calculateInvoice()"></td>
                         <td><input type="number" id="waterAfter" value="0" oninput="calculateInvoice()"></td>
                         <td><span id="waterUnit">0</span></td>
-                        <td><input type="number" id="waterRate" value="18" oninput="calculateInvoice()"></td>
+                        <td><input type="number" id="waterRate" value="30" oninput="calculateInvoice()"></td>
                         <td><span id="waterTotal">0</span></td>
                     </tr>
                     <tr>
@@ -334,7 +344,7 @@
                         <td><input type="number" id="elecBefore" value="0" oninput="calculateInvoice()"></td>
                         <td><input type="number" id="elecAfter" value="0" oninput="calculateInvoice()"></td>
                         <td><span id="elecUnit">0</span></td>
-                        <td><input type="number" id="elecRate" value="7" oninput="calculateInvoice()"></td>
+                        <td><input type="number" id="elecRate" value="6" oninput="calculateInvoice()"></td>
                         <td><span id="elecTotal">0</span></td>
                     </tr>
                     <tr>
@@ -355,7 +365,7 @@
                     </tr>
                     <tr class="total-row">
                         <td colspan="5" style="text-align: right;">รวมยอดเงินที่ต้องชำระทั้งสิ้น:</td>
-                        <td><span id="grandTotal" class="grand-total">3500</span></td>
+                        <td><span id="grandTotal" class="grand-total">2500.00</span></td>
                     </tr>
                 </tbody>
             </table>
@@ -448,7 +458,7 @@
 <script>
     let globalHistoryData = [];
 
-    // โหลดข้อมูลที่บันทึกไว้ใน LocalStorage ทันทีที่เปิดหน้าเว็บ
+    // โหลดข้อมูลอัตโนมัติและตั้งค่าเริ่มต้นปฏิทิน
     window.onload = function() {
         if(localStorage.getItem('webAppUrl')) {
             document.getElementById('webAppUrl').value = localStorage.getItem('webAppUrl');
@@ -459,7 +469,16 @@
         if(localStorage.getItem('qrUrl')) {
             document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
         }
+        
+        // ตั้งค่าวันที่ปัจจุบันในปฏิทินช่อง "ประจำเดือน:"
+        let today = new Date();
+        let yyyy = today.getFullYear();
+        let mm = String(today.getMonth() + 1).padStart(2, '0');
+        let dd = String(today.getDate()).padStart(2, '0');
+        document.getElementById('billingMonth').value = `${yyyy}-${mm}-${dd}`;
+
         updateDisplayFromSettings();
+        calculateInvoice();
     };
 
     function saveSettings() {
@@ -484,7 +503,7 @@
         document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
-        event.currentTarget.classList.add('active');
+        if (event) event.currentTarget.classList.add('active');
         
         if (tabId === 'history-tab' && globalHistoryData.length === 0) {
             let url = document.getElementById('webAppUrl').value;
@@ -517,12 +536,23 @@
         document.getElementById('grandTotal').innerText = total.toFixed(2);
     }
 
+    // ฟังก์ชันแปลงรูปแบบวันที่จาก yyyy-mm-dd ไปเป็น dd/mm/yyyy
+    function formatDateToDMY(dateString) {
+        if(!dateString) return '-';
+        let parts = dateString.split('-');
+        if(parts.length !== 3) return dateString;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
     function sendDataToSheets() {
         let url = document.getElementById('webAppUrl').value;
         if(!url) { return alert('❌ กรุณากรอก Web App URL ในแท็บตั้งค่าก่อนครับ!'); }
 
+        let rawDate = document.getElementById('billingMonth').value;
+        let formattedDate = formatDateToDMY(rawDate); // แปลงเป็น dd/mm/yyyy ก่อนบันทึกลง Sheets
+
         let payload = {
-            month: document.getElementById('billingMonth').value,
+            month: formattedDate,
             room: document.getElementById('roomNo').value,
             rent: parseFloat(document.getElementById('rentAmount').value) || 0,
             waterUnit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
@@ -534,7 +564,7 @@
             grandTotal: parseFloat(document.getElementById('grandTotal').innerText) || 0
         };
 
-        if(!payload.month) { return alert('❌ กรุณากรอกช่อง ประจำเดือน ก่อนกดบันทึกครับ'); }
+        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ประจำเดือนก่อนกดบันทึกครับ'); }
 
         fetch(url, {
             method: 'POST',
@@ -543,7 +573,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         }).then(() => {
-            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ลง Sheets สำเร็จ!');
+            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ประจำวันที่ ' + formattedDate + ' ลง Sheets สำเร็จ!');
             fetchHistoryFromSheets();
         }).catch(err => { alert('❌ เกิดข้อผิดพลาด: ' + err); });
     }
