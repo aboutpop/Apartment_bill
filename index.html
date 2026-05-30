@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการและออกบิลห้องเช่า V8.0 (Auth + Supabase)</title>
+    <title>ระบบจัดการและออกบิลห้องเช่า V9.0 (Auth + Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -177,7 +177,13 @@
             font-weight: bold;
         }
 
-        .qr-section {
+        /* โซนรูปภาพด้านขวาบนของบิล */
+        .image-right-section {
+            display: flex;
+            gap: 15px;
+        }
+
+        .logo-section, .qr-section {
             text-align: center;
             border: 1px solid #ddd;
             padding: 8px;
@@ -186,7 +192,7 @@
             width: 150px;
         }
 
-        .qr-placeholder {
+        .logo-placeholder, .qr-placeholder {
             width: 130px;
             height: 130px;
             background: #eee;
@@ -231,6 +237,7 @@
             font-size: 15px;
         }
 
+        /* ซ่อนลูกศรขึ้นลงของช่องกรอกตัวเลข */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
             -webkit-appearance: none;
@@ -343,6 +350,16 @@
             font-weight: bold;
         }
 
+        /* ล็อกรูปแบบ Date Picker ตอนแสดงผลซ้อนทับ */
+        input[type="date"]::before {
+            content: attr(data-placeholder);
+            width: 100%;
+        }
+        input[type="date"]:focus::before,
+        input[type="date"]:valid::before {
+            display: none;
+        }
+
         @media print {
             @page {
                 size: landscape;
@@ -358,6 +375,13 @@
             }
             .header-area, .tabs, .btn-group, .filter-section, .config-group, h3, p:not(#bankInfoShow) { 
                 display: none !important; 
+            }
+            /* ซ่อนกรอบของ Dropdown ขอบเขตวันที่/ห้อง ตอนพิมพ์เพื่อความสะอาด */
+            select, input[type="date"] {
+                border: none;
+                background: transparent;
+                appearance: none;
+                -webkit-appearance: none;
             }
             .tab-content { 
                 box-shadow: none; 
@@ -435,16 +459,25 @@
                             </div>
                             <div class="meta-item">
                                 <label>วันที่ออกบิล:</label>
-                                <input type="date" id="billingMonth" style="width: 160px; display: inline-block;">
+                                <input type="date" id="billingMonth" style="width: 160px; display: inline-block;" onchange="updateDateDisplay(this)">
                             </div>
                         </div>
                     </div>
                     
-                    <div class="qr-section">
-                        <div class="qr-placeholder" id="qrContainer">
-                            <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
+                    <div class="image-right-section">
+                        <div class="logo-section">
+                            <div class="logo-placeholder" id="logoContainer">
+                                <span style="padding: 10px;">[ แนบรูปโลโก้หอพัก ]</span>
+                            </div>
+                            <div style="font-size: 12px; font-weight: bold; color: #333;">โลโก้หอพัก</div>
                         </div>
-                        <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
+
+                        <div class="qr-section">
+                            <div class="qr-placeholder" id="qrContainer">
+                                <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
+                            </div>
+                            <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
+                        </div>
                     </div>
                 </div>
 
@@ -595,6 +628,11 @@
             </div>
 
             <div class="config-group">
+                <label>ลิงก์รูปภาพโลโก้หอพัก (Direct URL):</label>
+                <input type="text" id="logoUrlInput" placeholder="ใส่ลิงก์รูปภาพโลโก้ของคุณที่นี่" oninput="saveSettings()" style="text-align: left;">
+            </div>
+
+            <div class="config-group">
                 <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
                 <input type="text" id="qrUrlInput" placeholder="ใส่ลิงก์รูปภาพ QR Code" oninput="saveSettings()" style="text-align: left;">
             </div>
@@ -614,19 +652,21 @@
         if(localStorage.getItem('supabaseUrl')) document.getElementById('supabaseUrl').value = localStorage.getItem('supabaseUrl');
         if(localStorage.getItem('supabaseKey')) document.getElementById('supabaseKey').value = localStorage.getItem('supabaseKey');
         if(localStorage.getItem('bankInfo')) document.getElementById('bankInfoInput').value = localStorage.getItem('bankInfo');
+        if(localStorage.getItem('logoUrl')) document.getElementById('logoUrlInput').value = localStorage.getItem('logoUrl');
         if(localStorage.getItem('qrUrl')) document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
         
+        // ตั้งค่าวันที่เริ่มต้นเป็นวันปัจจุบัน
         let today = new Date();
         let yyyy = today.getFullYear();
         let mm = String(today.getMonth() + 1).padStart(2, '0');
         let dd = String(today.getDate()).padStart(2, '0');
-        document.getElementById('billingMonth').value = `${yyyy}-${mm}-${dd}`;
+        let dateInput = document.getElementById('billingMonth');
+        dateInput.value = `${yyyy}-${mm}-${dd}`;
+        updateDateDisplay(dateInput);
 
         initSupabase();
         updateDisplayFromSettings();
         calculateInvoice();
-        
-        // เช็คสถานะ Login เดิมเมื่อเปิดหน้าเว็บมาใหม่
         checkUserSession();
     };
 
@@ -638,7 +678,18 @@
         }
     }
 
-    // ฟังก์ชันเช็คว่าผู้ใช้ login ค้างไว้หรือไม่
+    // ฟังก์ชันจัดรูปแบบการแสดงผลวันที่เป็น DD/MM/YYYY ใน UI หน้าบ้าน
+    function updateDateDisplay(input) {
+        if(input.value) {
+            let parts = input.value.split('-');
+            if(parts.length === 3) {
+                input.setAttribute('data-placeholder', `${parts[2]}/${parts[1]}/${parts[0]}`);
+            }
+        } else {
+            input.setAttribute('data-placeholder', 'วว/ดด/ปปปป');
+        }
+    }
+
     async function checkUserSession() {
         if (!supabaseClient) return;
         const { data: { session } } = await supabaseClient.auth.getSession();
@@ -649,7 +700,6 @@
         }
     }
 
-    // ฟังก์ชันสั่งตรวจสอบสิทธิ์ตอนกดปุ่ม Login
     async function handleLogin() {
         document.getElementById('loginError').innerText = "";
         if (!supabaseClient) {
@@ -677,7 +727,6 @@
         }
     }
 
-    // ฟังก์ชันออกจากระบบ
     async function handleLogout() {
         if (supabaseClient) {
             await supabaseClient.auth.signOut();
@@ -702,6 +751,7 @@
         localStorage.setItem('supabaseUrl', document.getElementById('supabaseUrl').value);
         localStorage.setItem('supabaseKey', document.getElementById('supabaseKey').value);
         localStorage.setItem('bankInfo', document.getElementById('bankInfoInput').value);
+        localStorage.setItem('logoUrl', document.getElementById('logoUrlInput').value);
         localStorage.setItem('qrUrl', document.getElementById('qrUrlInput').value);
         initSupabase();
         updateDisplayFromSettings();
@@ -709,12 +759,23 @@
 
     function updateDisplayFromSettings() {
         document.getElementById('bankInfoShow').innerText = "บัญชีธนาคารสำหรับโอนเงิน: " + document.getElementById('bankInfoInput').value;
-        let qrUrl = document.getElementById('qrUrlInput').value;
-        let container = document.getElementById('qrContainer');
-        if(qrUrl) {
-            container.innerHTML = `<img src="${qrUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+        
+        // อัปเดตรูปโลโก้
+        let logoUrl = document.getElementById('logoUrlInput').value;
+        let logoContainer = document.getElementById('logoContainer');
+        if(logoUrl) {
+            logoContainer.innerHTML = `<img src="${logoUrl}" style="width:100%; height:100%; object-fit:contain;">`;
         } else {
-            container.innerHTML = `<span style="padding: 10px;">[ แนบรูป QR Code ]</span>`;
+            logoContainer.innerHTML = `<span style="padding: 10px;">[ แนบรูปโลโก้หอพัก ]</span>`;
+        }
+
+        // อัปเดตรูป QR Code
+        let qrUrl = document.getElementById('qrUrlInput').value;
+        let qrContainer = document.getElementById('qrContainer');
+        if(qrUrl) {
+            qrContainer.innerHTML = `<img src="${qrUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+        } else {
+            qrContainer.innerHTML = `<span style="padding: 10px;">[ แนบรูป QR Code ]</span>`;
         }
     }
 
