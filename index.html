@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการและออกบิลห้องเช่า V7.0 (Supabase)</title>
+    <title>ระบบจัดการและออกบิลห้องเช่า V8.0 (Auth + Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -28,9 +28,79 @@
             padding: 20px;
         }
 
+        /* หน้า Login Screen */
+        #loginOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(43, 87, 154, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .login-box h3 {
+            margin-top: 0;
+            color: var(--primary-color);
+            font-size: 22px;
+            margin-bottom: 25px;
+        }
+
+        .login-input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .login-input-group label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .login-input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+
+        /* ส่วนเนื้อหาหลัก (จะถูกซ่อนไว้ก่อน Login) */
+        #mainApp {
+            display: none;
+        }
+
         .container {
             max-width: 1200px;
             margin: 0 auto;
+        }
+
+        .header-area {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .logout-btn {
+            background: #d32f2f;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
         .tabs {
@@ -261,7 +331,6 @@
             gap: 15px;
         }
 
-        /* Pagination Style */
         .pagination-container {
             display: flex;
             justify-content: center;
@@ -274,7 +343,6 @@
             font-weight: bold;
         }
 
-        /* CSS สำหรับโหมดพิมพ์แนวนอน 1 แผ่นพอดี */
         @media print {
             @page {
                 size: landscape;
@@ -288,7 +356,7 @@
             .container {
                 max-width: 100%;
             }
-            h2, .tabs, .btn-group, .filter-section, .config-group, h3, p:not(#bankInfoShow) { 
+            .header-area, .tabs, .btn-group, .filter-section, .config-group, h3, p:not(#bankInfoShow) { 
                 display: none !important; 
             }
             .tab-content { 
@@ -301,7 +369,7 @@
                 width: 100%;
             }
             th, td {
-                padding: 6px 8px; /* กระชับตารางเล็กลงในหน้าพิมพ์ */
+                padding: 6px 8px;
                 font-size: 14px;
             }
             .grand-total {
@@ -315,200 +383,221 @@
 </head>
 <body>
 
-<div class="container">
-    <h2>🏠 ระบบจัดการและออกบิลห้องเช่า</h2>
-    
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('invoice-tab')">📝 ออกบิลค่าเช่า</button>
-        <button class="tab-btn" onclick="switchTab('history-tab')">📊 ประวัติข้อมูลรายห้อง</button>
-        <button class="tab-btn" onclick="switchTab('config-tab')">⚙️ ตั้งค่าระบบ & เชื่อมต่อฐานข้อมูล</button>
+<div id="loginOverlay">
+    <div class="login-box">
+        <h3>🏠 ระบบจัดการห้องเช่า<br><span style="font-size:14px; font-weight:normal; color:#666;">กรุณาเข้าสู่ระบบก่อนใช้งาน</span></h3>
+        <div class="login-input-group">
+            <label>อีเมลผู้ใช้งาน (Email):</label>
+            <input type="email" id="loginEmail" placeholder="example@email.com">
+        </div>
+        <div class="login-input-group">
+            <label>รหัสผ่าน (Password):</label>
+            <input type="password" id="loginPassword" placeholder="••••••••">
+        </div>
+        <button class="btn btn-primary" style="width: 100%; margin-top: 10px;" onclick="handleLogin()">🔓 เข้าสู่ระบบ</button>
+        <div id="loginError" style="color: red; margin-top: 15px; font-size: 14px; font-weight: bold;"></div>
     </div>
+</div>
 
-    <div id="invoice-tab" class="tab-content active">
-        <div class="invoice-box" id="printArea">
-            <div class="invoice-header">
-                <div>
-                    <div class="invoice-title">บิลค่าเช่าห้องพัก</div>
-                    <div class="meta-grid">
-                        <div class="meta-item">
-                            <label>ห้องที่:</label>
-                            <select id="roomNo" style="width: 100px; display: inline-block;" onchange="autoFetchLastMeter()">
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                                <option value="4">4</option>
-                                <option value="5">5</option>
-                                <option value="6">6</option>
-                                <option value="7">7</option>
-                                <option value="8">8</option>
-                                <option value="9">9</option>
-                                <option value="10">10</option>
-                            </select>
+<div id="mainApp">
+    <div class="container">
+        <div class="header-area">
+            <h2>🏠 ระบบจัดการและออกบิลห้องเช่า</h2>
+            <button class="logout-btn" onclick="handleLogout()">🔒 ออกจากระบบ</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('invoice-tab')">📝 ออกบิลค่าเช่า</button>
+            <button class="tab-btn" onclick="switchTab('history-tab')">📊 ประวัติข้อมูลรายห้อง</button>
+            <button class="tab-btn" onclick="switchTab('config-tab')">⚙️ ตั้งค่าระบบ & เชื่อมต่อฐานข้อมูล</button>
+        </div>
+
+        <div id="invoice-tab" class="tab-content active">
+            <div class="invoice-box" id="printArea">
+                <div class="invoice-header">
+                    <div>
+                        <div class="invoice-title">บิลค่าเช่าห้องพัก</div>
+                        <div class="meta-grid">
+                            <div class="meta-item">
+                                <label>ห้องที่:</label>
+                                <select id="roomNo" style="width: 100px; display: inline-block;" onchange="autoFetchLastMeter()">
+                                    <option value="1">1</option>
+                                    <option value="2">2</option>
+                                    <option value="3">3</option>
+                                    <option value="4">4</option>
+                                    <option value="5">5</option>
+                                    <option value="6">6</option>
+                                    <option value="7">7</option>
+                                    <option value="8">8</option>
+                                    <option value="9">9</option>
+                                    <option value="10">10</option>
+                                </select>
+                            </div>
+                            <div class="meta-item">
+                                <label>วันที่ออกบิล:</label>
+                                <input type="date" id="billingMonth" style="width: 160px; display: inline-block;">
+                            </div>
                         </div>
-                        <div class="meta-item">
-                            <label>วันที่ออกบิล:</label>
-                            <input type="date" id="billingMonth" style="width: 160px; display: inline-block;">
+                    </div>
+                    
+                    <div class="qr-section">
+                        <div class="qr-placeholder" id="qrContainer">
+                            <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
                         </div>
+                        <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
                     </div>
                 </div>
-                
-                <div class="qr-section">
-                    <div class="qr-placeholder" id="qrContainer">
-                        <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 25%;">รายการ</th>
+                            <th style="width: 15%;">เลขครั้งก่อน</th>
+                            <th style="width: 15%;">เลขครั้งนี้</th>
+                            <th style="width: 15%;">จำนวนหน่วยที่ใช้</th>
+                            <th style="width: 15%;">ราคาต่อหน่วย</th>
+                            <th style="width: 15%;">รวมเงิน (บาท)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="left">ค่าเช่าห้อง</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td><input type="number" id="rentAmount" value="2500" oninput="calculateInvoice()"></td>
+                        </tr>
+                        <tr>
+                            <td class="left">ค่าน้ำ</td>
+                            <td><input type="number" id="waterBefore" value="0" oninput="calculateInvoice()"></td>
+                            <td><input type="number" id="waterAfter" value="0" oninput="calculateInvoice()"></td>
+                            <td><span id="waterUnit">0</span></td>
+                            <td><input type="number" id="waterRate" value="30" oninput="calculateInvoice()"></td>
+                            <td><span id="waterTotal">0</span></td>
+                        </tr>
+                        <tr>
+                            <td class="left">ค่าไฟ</td>
+                            <td><input type="number" id="elecBefore" value="0" oninput="calculateInvoice()"></td>
+                            <td><input type="number" id="elecAfter" value="0" oninput="calculateInvoice()"></td>
+                            <td><span id="elecUnit">0</span></td>
+                            <td><input type="number" id="elecRate" value="6" oninput="calculateInvoice()"></td>
+                            <td><span id="elecTotal">0</span></td>
+                        </tr>
+                        <tr>
+                            <td class="left">อินเทอร์เน็ต / อื่นๆ</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td><input type="number" id="internetAmount" value="0" oninput="calculateInvoice()"></td>
+                        </tr>
+                        <tr>
+                            <td class="left" style="color: #c62828;">ส่วนลด</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td>-</td>
+                            <td><input type="number" id="discountAmount" value="0" oninput="calculateInvoice()" style="color: #c62828;"></td>
+                        </tr>
+                        <tr class="total-row">
+                            <td colspan="5" style="text-align: right;">รวมยอดเงินที่ต้องชำระทั้งสิ้น:</td>
+                            <td><span id="grandTotal" class="grand-total">2500.00</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="invoice-footer">
+                    <p style="margin: 0;" id="bankInfoShow">บัญชีธนาคารสำหรับโอนเงิน: กำลังโหลด...</p>
+                    
+                    <div class="signature-area">
+                        <p>ลายเซ็นต์: ___________________________</p>
+                        <p style="margin-top: 5px;">( เจ้าของบ้าน )</p>
                     </div>
-                    <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
+                    <div class="clear"></div>
                 </div>
             </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th style="width: 25%;">รายการ</th>
-                        <th style="width: 15%;">เลขครั้งก่อน</th>
-                        <th style="width: 15%;">เลขครั้งนี้</th>
-                        <th style="width: 15%;">จำนวนหน่วยที่ใช้</th>
-                        <th style="width: 15%;">ราคาต่อหน่วย</th>
-                        <th style="width: 15%;">รวมเงิน (บาท)</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td class="left">ค่าเช่าห้อง</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><input type="number" id="rentAmount" value="2500" oninput="calculateInvoice()"></td>
-                    </tr>
-                    <tr>
-                        <td class="left">ค่าน้ำ</td>
-                        <td><input type="number" id="waterBefore" value="0" oninput="calculateInvoice()"></td>
-                        <td><input type="number" id="waterAfter" value="0" oninput="calculateInvoice()"></td>
-                        <td><span id="waterUnit">0</span></td>
-                        <td><input type="number" id="waterRate" value="30" oninput="calculateInvoice()"></td>
-                        <td><span id="waterTotal">0</span></td>
-                    </tr>
-                    <tr>
-                        <td class="left">ค่าไฟ</td>
-                        <td><input type="number" id="elecBefore" value="0" oninput="calculateInvoice()"></td>
-                        <td><input type="number" id="elecAfter" value="0" oninput="calculateInvoice()"></td>
-                        <td><span id="elecUnit">0</span></td>
-                        <td><input type="number" id="elecRate" value="6" oninput="calculateInvoice()"></td>
-                        <td><span id="elecTotal">0</span></td>
-                    </tr>
-                    <tr>
-                        <td class="left">อินเทอร์เน็ต / อื่นๆ</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><input type="number" id="internetAmount" value="0" oninput="calculateInvoice()"></td>
-                    </tr>
-                    <tr>
-                        <td class="left" style="color: #c62828;">ส่วนลด</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td><input type="number" id="discountAmount" value="0" oninput="calculateInvoice()" style="color: #c62828;"></td>
-                    </tr>
-                    <tr class="total-row">
-                        <td colspan="5" style="text-align: right;">รวมยอดเงินที่ต้องชำระทั้งสิ้น:</td>
-                        <td><span id="grandTotal" class="grand-total">2500.00</span></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <div class="invoice-footer">
-                <p style="margin: 0;" id="bankInfoShow">บัญชีธนาคารสำหรับโอนเงิน: กำลังโหลด...</p>
-                
-                <div class="signature-area">
-                    <p>ลายเซ็นต์: ___________________________</p>
-                    <p style="margin-top: 5px;">( เจ้าของบ้าน )</p>
-                </div>
-                <div class="clear"></div>
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="window.print()">🖨️ บันทึกเป็นไฟล์ PDF</button>
+                <button class="btn btn-success" onclick="sendDataToSupabase()">💾 บันทึกข้อมูลลงฐานข้อมูลคลาวด์</button>
             </div>
         </div>
 
-        <div class="btn-group">
-            <button class="btn btn-primary" onclick="window.print()">🖨️ บันทึกเป็นไฟล์ PDF</button>
-            <button class="btn btn-success" onclick="sendDataToSupabase()">💾 บันทึกข้อมูลลงฐานข้อมูลคลาวด์</button>
-        </div>
-    </div>
+        <div id="history-tab" class="tab-content">
+            <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง</h3>
+            
+            <div class="filter-section">
+                <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้อง:</label>
+                <select id="historyRoomSelect" style="width: 120px;" onchange="resetPageAndFilter()">
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
+                <button class="btn btn-primary" onclick="fetchHistoryFromSupabase()" style="padding: 8px 16px; font-size: 14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
+            </div>
 
-    <div id="history-tab" class="tab-content">
-        <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง</h3>
-        
-        <div class="filter-section">
-            <label style="font-weight: bold; font-size: 16px;">เลือกหมายเลขห้อง:</label>
-            <select id="historyRoomSelect" style="width: 120px;" onchange="resetPageAndFilter()">
-                <option value="1">1</option>
-                <option value="2">2</option>
-                <option value="3">3</option>
-                <option value="4">4</option>
-                <option value="5">5</option>
-                <option value="6">6</option>
-                <option value="7">7</option>
-                <option value="8">8</option>
-                <option value="9">9</option>
-                <option value="10">10</option>
-            </select>
-            <button class="btn btn-primary" onclick="fetchHistoryFromSupabase()" style="padding: 8px 16px; font-size: 14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
-        </div>
+            <div style="overflow-x: auto;">
+                <table id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>วัน-เวลาที่บันทึก</th>
+                            <th>วันที่ออกบิล</th>
+                            <th>ห้อง</th>
+                            <th>ค่าเช่าห้อง</th>
+                            <th>เลขมิเตอร์น้ำ (ก่อน/ล่าสุด)</th>
+                            <th>รวมค่าน้ำ</th>
+                            <th>เลขมิเตอร์ไฟ (ก่อน/ล่าสุด)</th>
+                            <th>รวมค่าไฟ</th>
+                            <th>อื่นๆ</th>
+                            <th>ส่วนลด</th>
+                            <th style="color: #d32f2f;">ยอดสุทธิ</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <tr>
+                            <td colspan="11" style="color: #666; padding: 20px;">ยังไม่มีข้อมูล หรือกรุณากดดึงข้อมูล</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-        <div style="overflow-x: auto;">
-            <table id="historyTable">
-                <thead>
-                    <tr>
-                        <th>วัน-เวลาที่บันทึก</th>
-                        <th>วันที่ออกบิล</th>
-                        <th>ห้อง</th>
-                        <th>ค่าเช่าห้อง</th>
-                        <th>เลขมิเตอร์น้ำ (ก่อน/ล่าสุด)</th>
-                        <th>รวมค่าน้ำ</th>
-                        <th>เลขมิเตอร์ไฟ (ก่อน/ล่าสุด)</th>
-                        <th>รวมค่าไฟ</th>
-                        <th>อื่นๆ</th>
-                        <th>ส่วนลด</th>
-                        <th style="color: #d32f2f;">ยอดสุทธิ</th>
-                    </tr>
-                </thead>
-                <tbody id="historyTableBody">
-                    <tr>
-                        <td colspan="11" style="color: #666; padding: 20px;">ยังไม่มีข้อมูล หรือกรุณากดดึงข้อมูล</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <div class="pagination-container" id="paginationControls" style="display: none;">
-            <button class="btn btn-primary" id="btnPrev" onclick="changePage(-1)" style="padding: 8px 16px; font-size: 14px;">⬅️ หน้าก่อนหน้า</button>
-            <span class="page-info" id="pageInfo">หน้า 1 / 1</span>
-            <button class="btn btn-primary" id="btnNext" onclick="changePage(1)" style="padding: 8px 16px; font-size: 14px;">หน้าถัดไป ➡️</button>
-        </div>
-    </div>
-
-    <div id="config-tab" class="tab-content">
-        <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
-        
-        <div class="config-group">
-            <label>Supabase URL:</label>
-            <input type="text" id="supabaseUrl" style="text-align: left;" placeholder="https://xyz.supabase.co" oninput="saveSettings()">
+            <div class="pagination-container" id="paginationControls" style="display: none;">
+                <button class="btn btn-primary" id="btnPrev" onclick="changePage(-1)" style="padding: 8px 16px; font-size: 14px;">⬅️ หน้าก่อนหน้า</button>
+                <span class="page-info" id="pageInfo">หน้า 1 / 1</span>
+                <button class="btn btn-primary" id="btnNext" onclick="changePage(1)" style="padding: 8px 16px; font-size: 14px;">หน้าถัดไป ➡️</button>
+            </div>
         </div>
 
-        <div class="config-group">
-            <label>Supabase Anon API Key:</label>
-            <input type="text" id="supabaseKey" style="text-align: left;" placeholder="ใส่คีย์สาธารณะ sb_publishable_... หรือ anon ของคุณ" oninput="saveSettings()">
-        </div>
+        <div id="config-tab" class="tab-content">
+            <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
+            
+            <div class="config-group">
+                <label>Supabase URL:</label>
+                <input type="text" id="supabaseUrl" style="text-align: left;" placeholder="https://xyz.supabase.co" oninput="saveSettings()">
+            </div>
 
-        <div class="config-group">
-            <label>ข้อมูลบัญชีธนาคาร (แสดงท้ายบิล):</label>
-            <input type="text" id="bankInfoInput" value="ธนาคารกสิกรไทย เลขที่บัญชี 123-4-56789-0 ชื่อบัญชี สมชาย ใจดี" oninput="saveSettings()" style="text-align: left;">
-        </div>
+            <div class="config-group">
+                <label>Supabase Anon API Key:</label>
+                <input type="text" id="supabaseKey" style="text-align: left;" placeholder="ใส่คีย์สาธารณะ sb_publishable_... หรือ anon ของคุณ" oninput="saveSettings()">
+            </div>
 
-        <div class="config-group">
-            <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
-            <input type="text" id="qrUrlInput" placeholder="ใส่ลิงก์รูปภาพ QR Code" oninput="saveSettings()" style="text-align: left;">
+            <div class="config-group">
+                <label>ข้อมูลบัญชีธนาคาร (แสดงท้ายบิล):</label>
+                <input type="text" id="bankInfoInput" value="ธนาคารกสิกรไทย เลขที่บัญชี 123-4-56789-0 ชื่อบัญชี สมชาย ใจดี" oninput="saveSettings()" style="text-align: left;">
+            </div>
+
+            <div class="config-group">
+                <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
+                <input type="text" id="qrUrlInput" placeholder="ใส่ลิงก์รูปภาพ QR Code" oninput="saveSettings()" style="text-align: left;">
+            </div>
         </div>
     </div>
 </div>
@@ -517,7 +606,6 @@
     let supabaseClient = null;
     let globalHistoryData = [];
     
-    // ตัวแปรควบคุมระบบแบ่งหน้า (Pagination)
     let currentPage = 1;
     const rowsPerPage = 12;
     let filteredData = [];
@@ -537,7 +625,9 @@
         initSupabase();
         updateDisplayFromSettings();
         calculateInvoice();
-        autoFetchLastMeter();
+        
+        // เช็คสถานะ Login เดิมเมื่อเปิดหน้าเว็บมาใหม่
+        checkUserSession();
     };
 
     function initSupabase() {
@@ -546,6 +636,66 @@
         if(url && key) {
             supabaseClient = supabase.createClient(url, key);
         }
+    }
+
+    // ฟังก์ชันเช็คว่าผู้ใช้ login ค้างไว้หรือไม่
+    async function checkUserSession() {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            showApp();
+        } else {
+            hideApp();
+        }
+    }
+
+    // ฟังก์ชันสั่งตรวจสอบสิทธิ์ตอนกดปุ่ม Login
+    async function handleLogin() {
+        document.getElementById('loginError').innerText = "";
+        if (!supabaseClient) {
+            document.getElementById('loginError').innerText = "❌ กรุณากรอกและบันทึก URL/Key ของ Supabase ในโค้ดก่อนครับ";
+            return;
+        }
+
+        let email = document.getElementById('loginEmail').value.trim();
+        let password = document.getElementById('loginPassword').value.trim();
+
+        if(!email || !password) {
+            document.getElementById('loginError').innerText = "❌ กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน";
+            return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            document.getElementById('loginError').innerText = "❌ เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+        } else {
+            showApp();
+        }
+    }
+
+    // ฟังก์ชันออกจากระบบ
+    async function handleLogout() {
+        if (supabaseClient) {
+            await supabaseClient.auth.signOut();
+        }
+        hideApp();
+        document.getElementById('loginEmail').value = "";
+        document.getElementById('loginPassword').value = "";
+    }
+
+    function showApp() {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        autoFetchLastMeter();
+    }
+
+    function hideApp() {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
     }
 
     function saveSettings() {
@@ -634,7 +784,7 @@
     }
 
     async function sendDataToSupabase() {
-        if(!supabaseClient) { return alert('❌ กรุณากรอก URL และ API Key ในแท็บตั้งค่าก่อนครับ!'); }
+        if(!supabaseClient) { return alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ!'); }
 
         let rawDate = document.getElementById('billingMonth').value;
         if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); }
@@ -693,10 +843,7 @@
 
     function filterHistoryData() {
         let selectedRoom = document.getElementById('historyRoomSelect').value;
-        
-        // กรองข้อมูลตามห้องที่เลือก
         filteredData = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
-        
         displayHistoryPage();
     }
 
@@ -711,7 +858,6 @@
             return;
         }
 
-        // คำนวณขอบเขตข้อมูลของหน้านั้นๆ (สูงสุด 12 แถว)
         let totalPages = Math.ceil(filteredData.length / rowsPerPage);
         if (currentPage > totalPages) currentPage = totalPages;
         if (currentPage < 1) currentPage = 1;
@@ -720,7 +866,6 @@
         let end = start + rowsPerPage;
         let pageData = filteredData.slice(start, end);
 
-        // แสดงผลข้อมูลลงในตาราง
         pageData.forEach(item => {
             let tr = document.createElement('tr');
             let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
@@ -744,11 +889,9 @@
             tbody.appendChild(tr);
         });
 
-        // จัดการส่วนควบคุมการแบ่งหน้า (Pagination Controls)
         document.getElementById('paginationControls').style.display = 'flex';
         document.getElementById('pageInfo').innerText = `หน้า ${currentPage} / ${totalPages}`;
         
-        // เปิด/ปิดการทำงานของปุ่มควบคุมตามความเหมาะสม
         document.getElementById('btnPrev').disabled = (currentPage === 1);
         document.getElementById('btnNext').disabled = (currentPage === totalPages);
     }
