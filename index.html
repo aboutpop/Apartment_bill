@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบจัดการและออกบิลห้องเช่า V9.1 (Auth + Supabase)</title>
+    <title>ระบบจัดการและออกบิลห้องเช่า V9.2 (Auth + Supabase)</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -76,7 +76,7 @@
             font-size: 16px;
         }
 
-        /* ส่วนเนื้อหาหลัก (จะถูกซ่อนไว้ก่อน Login) */
+        /* ส่วนเนื้อหาหลัก */
         #mainApp {
             display: none;
         }
@@ -177,53 +177,53 @@
             font-weight: bold;
         }
 
-        /* โซนรูปภาพด้านขวาบนของบิล */
+        /* โซนรูปภาพด้านขวาบนของบิล (ลบขอบ ลบสีเทาออกทั้งหมด) */
         .image-right-section {
             display: flex;
-            gap: 15px;
+            gap: 20px;
         }
 
         .logo-section, .qr-section {
             text-align: center;
-            border: 1px solid #ddd;
-            padding: 8px;
-            background: #fafafa;
-            border-radius: 4px;
-            width: 150px;
+            background: transparent;
+            border: none;
+            padding: 0;
+            width: 140px;
         }
 
-        /* ปรับปรุงกล่องโลโก้ให้ไม่มีช่องว่างข้อความด้านล่าง เพื่อให้รูปขยายใหญ่ได้เต็มที่ */
         .logo-section {
-            padding: 4px; 
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .logo-placeholder {
+        /* ตัว Placeholder ตอนยังไม่ใส่ลิงก์รูปภาพ (จะแสดงกรอบแดชบาง ๆ เพื่อบอกตำแหน่งแก้ไข) */
+        .logo-placeholder, .qr-placeholder {
             width: 140px;
             height: 140px;
-            background: #eee;
-            margin: 0;
+            background: transparent;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 12px;
-            color: #666;
-            border: 1px dashed #999;
+            color: #999;
+            border: 1px dashed #ccc;
         }
 
-        .qr-placeholder {
-            width: 130px;
-            height: 130px;
-            background: #eee;
-            margin: 0 auto 5px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            color: #666;
-            border: 1px dashed #999;
+        /* ตัวอักษรกำกับใต้ QR code */
+        .qr-text {
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #1a237e; 
+            margin-top: 5px;
+        }
+
+        /* ซ่อนกรอบแดชเมื่อเปิดพิมพ์ผ่าน Printer */
+        @media print {
+            .logo-placeholder, .qr-placeholder {
+                border: none !important;
+            }
         }
 
         table {
@@ -371,7 +371,7 @@
             font-weight: bold;
         }
 
-        /* ล็อกรูปแบบ Date Picker ตอนแสดงผลซ้อนทับ */
+        /* ล็อกรูปแบบ Date Picker */
         input[type="date"]::before {
             content: attr(data-placeholder);
             width: 100%;
@@ -397,7 +397,6 @@
             .header-area, .tabs, .btn-group, .filter-section, .config-group, h3, p:not(#bankInfoShow) { 
                 display: none !important; 
             }
-            /* ซ่อนกรอบของ Dropdown ขอบเขตวันที่/ห้อง ตอนพิมพ์เพื่อความสะอาด */
             select, input[type="date"] {
                 border: none;
                 background: transparent;
@@ -428,6 +427,7 @@
 </head>
 <body>
 
+<!-- หน้าต่าง Login Overlay -->
 <div id="loginOverlay">
     <div class="login-box">
         <h3>🏠 ระบบจัดการห้องเช่า<br><span style="font-size:14px; font-weight:normal; color:#666;">กรุณาเข้าสู่ระบบก่อนใช้งาน</span></h3>
@@ -444,6 +444,7 @@
     </div>
 </div>
 
+<!-- แอปพลิเคชันหลัก -->
 <div id="mainApp">
     <div class="container">
         <div class="header-area">
@@ -485,17 +486,18 @@
                         </div>
                     </div>
                     
+                    <!-- ส่วนแนบรูปภาพฝั่งขวา (แบบคลีนไม่มีพื้นหลังและขอบสีเทา) -->
                     <div class="image-right-section">
                         <div class="qr-section">
                             <div class="qr-placeholder" id="qrContainer">
-                                <span style="padding: 10px;">[ แนบรูป QR Code ]</span>
+                                <span>[ แนบรูป QR Code ]</span>
                             </div>
-                            <div style="font-size: 12px; font-weight: bold; color: #1a237e;">สแกนเพื่อชำระเงิน</div>
+                            <div class="qr-text" id="qrLabelText">สแกนเพื่อชำระเงิน</div>
                         </div>
 
                         <div class="logo-section">
                             <div class="logo-placeholder" id="logoContainer">
-                                <span style="padding: 10px;">[ แนบรูปโลโก้ ]</span>
+                                <span>[ แนบรูปโลโก้ ]</span>
                             </div>
                         </div>
                     </div>
@@ -781,17 +783,21 @@
         let logoUrl = document.getElementById('logoUrlInput').value;
         let logoContainer = document.getElementById('logoContainer');
         if(logoUrl) {
-            logoContainer.innerHTML = `<img src="${logoUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+            logoContainer.style.border = "none";
+            logoContainer.innerHTML = `<img src="${logoUrl}" style="width:100%; height:100%; object-fit:contain; display:block;">`;
         } else {
-            logoContainer.innerHTML = `<span style="padding: 10px;">[ แนบรูปโลโก้ ]</span>`;
+            logoContainer.style.border = "1px dashed #ccc";
+            logoContainer.innerHTML = `<span>[ แนบรูปโลโก้ ]</span>`;
         }
 
         let qrUrl = document.getElementById('qrUrlInput').value;
         let qrContainer = document.getElementById('qrContainer');
         if(qrUrl) {
-            qrContainer.innerHTML = `<img src="${qrUrl}" style="width:100%; height:100%; object-fit:contain;">`;
+            qrContainer.style.border = "none";
+            qrContainer.innerHTML = `<img src="${qrUrl}" style="width:100%; height:100%; object-fit:contain; display:block;">`;
         } else {
-            qrContainer.innerHTML = `<span style="padding: 10px;">[ แนบรูป QR Code ]</span>`;
+            qrContainer.style.border = "1px dashed #ccc";
+            qrContainer.innerHTML = `<span>[ แนบรูป QR Code ]</span>`;
         }
     }
 
