@@ -701,4 +701,306 @@
         let dd = String(today.getDate()).padStart(2, '0');
         let dateInput = document.getElementById('billingMonth');
         dateInput.value = `${yyyy}-${mm}-${dd}`;
-        updateDateDisplay(dateInput
+        updateDateDisplay(dateInput);
+
+        initSupabase();
+        updateDisplayFromSettings();
+        calculateInvoice();
+        checkUserSession();
+    };
+
+    function initSupabase() {
+        let url = document.getElementById('supabaseUrl').value.trim();
+        let key = document.getElementById('supabaseKey').value.trim();
+        if(url && key) {
+            supabaseClient = supabase.createClient(url, key);
+        }
+    }
+
+    function updateDateDisplay(input) {
+        if(input.value) {
+            let parts = input.value.split('-');
+            if(parts.length === 3) {
+                input.setAttribute('data-placeholder', `${parts[2]}/${parts[1]}/${parts[0]}`);
+            }
+        } else {
+            input.setAttribute('data-placeholder', 'วว/ดด/ปปปป');
+        }
+    }
+
+    async function checkUserSession() {
+        if (!supabaseClient) return;
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+            showApp();
+        } else {
+            hideApp();
+        }
+    }
+
+    async function handleLogin() {
+        document.getElementById('loginError').innerText = "";
+        if (!supabaseClient) {
+            document.getElementById('loginError').innerText = "❌ กรุณากรอกและบันทึก URL/Key ของ Supabase ในโค้ดก่อนครับ";
+            return;
+        }
+
+        let email = document.getElementById('loginEmail').value.trim();
+        let password = document.getElementById('loginPassword').value.trim();
+
+        if(!email || !password) {
+            document.getElementById('loginError').innerText = "❌ กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน";
+            return;
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            document.getElementById('loginError').innerText = "❌ เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+        } else {
+            showApp();
+        }
+    }
+
+    async function handleLogout() {
+        if (supabaseClient) {
+            await supabaseClient.auth.signOut();
+        }
+        hideApp();
+        document.getElementById('loginEmail').value = "";
+        document.getElementById('loginPassword').value = "";
+    }
+
+    function showApp() {
+        document.getElementById('loginOverlay').style.display = 'none';
+        document.getElementById('mainApp').style.display = 'block';
+        autoFetchLastMeter();
+    }
+
+    function hideApp() {
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+    }
+
+    function saveSettings() {
+        localStorage.setItem('supabaseUrl', document.getElementById('supabaseUrl').value);
+        localStorage.setItem('supabaseKey', document.getElementById('supabaseKey').value);
+        localStorage.setItem('bankInfo', document.getElementById('bankInfoInput').value);
+        localStorage.setItem('logoUrl', document.getElementById('logoUrlInput').value);
+        localStorage.setItem('qrUrl', document.getElementById('qrUrlInput').value);
+        initSupabase();
+        updateDisplayFromSettings();
+    }
+
+    function updateDisplayFromSettings() {
+        document.getElementById('bankInfoShow').innerText = "บัญชีธนาคารสำหรับโอนเงิน: " + document.getElementById('bankInfoInput').value;
+        
+        let logoUrl = document.getElementById('logoUrlInput').value;
+        let logoContainer = document.getElementById('logoContainer');
+        if(logoUrl) {
+            logoContainer.style.border = "none";
+            logoContainer.innerHTML = `<img src="${logoUrl}" style="width:100%; height:100%; object-fit:contain; display:block;">`;
+        } else {
+            logoContainer.style.border = "1px dashed #ccc";
+            logoContainer.innerHTML = `<span>[ แนบรูปโลโก้ ]</span>`;
+        }
+
+        let qrUrl = document.getElementById('qrUrlInput').value;
+        let qrContainer = document.getElementById('qrContainer');
+        if(qrUrl) {
+            qrContainer.style.border = "none";
+            qrContainer.innerHTML = `<img src="${qrUrl}" style="width:100%; height:100%; object-fit:contain; display:block;">`;
+        } else {
+            qrContainer.style.border = "1px dashed #ccc";
+            qrContainer.innerHTML = `<span>[ แนบรูป QR Code ]</span>`;
+        }
+    }
+
+    function switchTab(tabId) {
+        document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tabId).classList.add('active');
+        if (event) event.currentTarget.classList.add('active');
+        
+        if (tabId === 'history-tab') {
+            fetchHistoryFromSupabase();
+        }
+    }
+
+    function calculateInvoice() {
+        let rent = parseFloat(document.getElementById('rentAmount').value) || 0;
+        let internet = parseFloat(document.getElementById('internetAmount').value) || 0;
+        let discount = parseFloat(document.getElementById('discountAmount').value) || 0;
+
+        let wBefore = parseFloat(document.getElementById('waterBefore').value) || 0;
+        let wAfter = parseFloat(document.getElementById('waterAfter').value) || 0;
+        let wRate = parseFloat(document.getElementById('waterRate').value) || 0;
+        let wUnit = wAfter >= wBefore ? wAfter - wBefore : 0;
+        let wTotal = wUnit * wRate;
+        document.getElementById('waterUnit').innerText = wUnit;
+        document.getElementById('waterTotal').innerText = wTotal.toFixed(2);
+
+        let eBefore = parseFloat(document.getElementById('elecBefore').value) || 0;
+        let eAfter = parseFloat(document.getElementById('elecAfter').value) || 0;
+        let eRate = parseFloat(document.getElementById('elecRate').value) || 0;
+        let eUnit = eAfter >= eBefore ? eAfter - eBefore : 0;
+        let eTotal = eUnit * eRate;
+        document.getElementById('elecUnit').innerText = eUnit;
+        document.getElementById('elecTotal').innerText = eTotal.toFixed(2);
+
+        let total = (rent + wTotal + eTotal + internet) - discount;
+        document.getElementById('grandTotal').innerText = total.toFixed(2);
+    }
+
+    function formatDateToDMY(dateString) {
+        if(!dateString) return '-';
+        let parts = dateString.split('-');
+        if(parts.length !== 3) return dateString;
+        return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    }
+
+    async function autoFetchLastMeter() {
+        if (!supabaseClient) return;
+        let currentRoom = document.getElementById('roomNo').value;
+        
+        const { data, error } = await supabaseClient
+            .from('room_records')
+            .select('water_after, elec_after')
+            .eq('room', currentRoom)
+            .order('id', { ascending: false })
+            .limit(1);
+
+        if (data && data.length > 0) {
+            document.getElementById('waterBefore').value = data[0].water_after || 0;
+            document.getElementById('elecBefore').value = data[0].elec_after || 0;
+            calculateInvoice();
+        } else {
+            document.getElementById('waterBefore').value = 0;
+            document.getElementById('elecBefore').value = 0;
+            calculateInvoice();
+        }
+    }
+
+    async function sendDataToSupabase() {
+        if(!supabaseClient) { return alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ!'); }
+
+        let rawDate = document.getElementById('billingMonth').value;
+        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); }
+        let formattedDate = formatDateToDMY(rawDate);
+
+        let payload = {
+            month: formattedDate,
+            room: document.getElementById('roomNo').value,
+            rent: parseFloat(document.getElementById('rentAmount').value) || 0,
+            water_unit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
+            water_total: parseFloat(document.getElementById('waterTotal').innerText) || 0,
+            water_after: parseFloat(document.getElementById('waterAfter').value) || 0, 
+            elec_unit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
+            elec_total: parseFloat(document.getElementById('elecTotal').innerText) || 0,
+            elec_after: parseFloat(document.getElementById('elecAfter').value) || 0,   
+            internet: parseFloat(document.getElementById('internetAmount').value) || 0,
+            discount: parseFloat(document.getElementById('discountAmount').value) || 0,
+            grand_total: parseFloat(document.getElementById('grandTotal').innerText) || 0
+        };
+
+        const { data, error } = await supabaseClient
+            .from('room_records')
+            .insert([payload]);
+
+        if (error) {
+            alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
+        } else {
+            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ประจำวันที่ ' + formattedDate + ' สำเร็จ!');
+        }
+    }
+
+    async function fetchHistoryFromSupabase() {
+        if(!supabaseClient) return;
+
+        let tbody = document.getElementById('historyTableBody');
+        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจากฐานข้อมูล Supabase...</td></tr>`;
+        document.getElementById('paginationControls').style.display = 'none';
+
+        const { data, error } = await supabaseClient
+            .from('room_records')
+            .select('*')
+            .order('id', { ascending: false });
+
+        if (error) {
+            tbody.innerHTML = `<tr><td colspan="11" style="color: red; padding: 20px;">❌ เกิดข้อผิดพลาด: ${error.message}</td></tr>`;
+        } else {
+            globalHistoryData = data;
+            resetPageAndFilter();
+        }
+    }
+
+    function resetPageAndFilter() {
+        currentPage = 1;
+        filterHistoryData();
+    }
+
+    function filterHistoryData() {
+        let selectedRoom = document.getElementById('historyRoomSelect').value;
+        filteredData = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
+        displayHistoryPage();
+    }
+
+    function displayHistoryPage() {
+        let tbody = document.getElementById('historyTableBody');
+        let selectedRoom = document.getElementById('historyRoomSelect').value;
+        tbody.innerHTML = '';
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="11" style="color: #666; padding: 20px;">📅 ไม่พบประวัติของห้อง ${selectedRoom}</td></tr>`;
+            document.getElementById('paginationControls').style.display = 'none';
+            return;
+        }
+
+        let totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        let start = (currentPage - 1) * rowsPerPage;
+        let end = start + rowsPerPage;
+        let pageData = filteredData.slice(start, end);
+
+        pageData.forEach(item => {
+            let tr = document.createElement('tr');
+            let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
+            
+            let wBeforeShow = (parseFloat(item.water_after) - parseFloat(item.water_unit)) || 0;
+            let eBeforeShow = (parseFloat(item.elec_after) - parseFloat(item.elec_unit)) || 0;
+
+            tr.innerHTML = `
+                <td>${dateStr}</td>
+                <td><b>${item.month || '-'}</b></td>
+                <td>${item.room}</td>
+                <td>${parseFloat(item.rent).toLocaleString()}</td>
+                <td>${wBeforeShow} ➔ <b>${item.water_after}</b> (${item.water_unit} หน่วย)</td>
+                <td>${parseFloat(item.water_total).toFixed(2)}</td>
+                <td>${eBeforeShow} ➔ <b>${item.elec_after}</b> (${item.elec_unit} หน่วย)</td>
+                <td>${parseFloat(item.elec_total).toFixed(2)}</td>
+                <td>${parseFloat(item.internet).toFixed(2)}</td>
+                <td style="color:red;">-${parseFloat(item.discount).toFixed(2)}</td>
+                <td style="font-weight:bold; color:blue;">${parseFloat(item.grand_total).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        document.getElementById('paginationControls').style.display = 'flex';
+        document.getElementById('pageInfo').innerText = `หน้า ${currentPage} / ${totalPages}`;
+        
+        document.getElementById('btnPrev').disabled = (currentPage === 1);
+        document.getElementById('btnNext').disabled = (currentPage === totalPages);
+    }
+
+    function changePage(direction) {
+        currentPage += direction;
+        displayHistoryPage();
+    }
+</script>
+</body>
+</html>
