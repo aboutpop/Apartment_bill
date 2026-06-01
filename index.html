@@ -689,11 +689,16 @@
     let filteredData = [];
 
     window.onload = function() {
-        if(localStorage.getItem('supabaseUrl')) document.getElementById('supabaseUrl').value = localStorage.getItem('supabaseUrl');
-        if(localStorage.getItem('supabaseKey')) document.getElementById('supabaseKey').value = localStorage.getItem('supabaseKey');
-        if(localStorage.getItem('bankInfo')) document.getElementById('bankInfoInput').value = localStorage.getItem('bankInfo');
-        if(localStorage.getItem('logoUrl')) document.getElementById('logoUrlInput').value = localStorage.getItem('logoUrl');
-        if(localStorage.getItem('qrUrl')) document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
+        if(localStorage.getItem('supabaseUrl')) 
+            document.getElementById('supabaseUrl').value = localStorage.getItem('supabaseUrl');
+        if(localStorage.getItem('supabaseKey')) 
+            document.getElementById('supabaseKey').value = localStorage.getItem('supabaseKey');
+        if(localStorage.getItem('bankInfo')) 
+            document.getElementById('bankInfoInput').value = localStorage.getItem('bankInfo');
+        if(localStorage.getItem('logoUrl')) 
+            document.getElementById('logoUrlInput').value = localStorage.getItem('logoUrl');
+        if(localStorage.getItem('qrUrl')) 
+            document.getElementById('qrUrlInput').value = localStorage.getItem('qrUrl');
         
         let today = new Date();
         let yyyy = today.getFullYear();
@@ -706,7 +711,7 @@
         initSupabase();
         updateDisplayFromSettings();
         calculateInvoice();
-        checkUserSession();
+        checkUserSession(); // ✅ ข้อ 2: เรียก checkUserSession ปกติ
     };
 
     function initSupabase() {
@@ -728,20 +733,35 @@
         }
     }
 
+    // ✅ ข้อ 2: แก้ checkUserSession ให้บังคับแสดง Login เสมอถ้าไม่มี session
     async function checkUserSession() {
-        if (!supabaseClient) return;
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        if (session) {
-            showApp();
-        } else {
-            hideApp();
+        if (!supabaseClient) {
+            hideApp(); // บังคับแสดง Login แทนที่จะ return เฉยๆ
+            return;
+        }
+        try {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                showApp();
+            } else {
+                hideApp();
+            }
+        } catch(e) {
+            hideApp(); // ถ้า error ก็บังคับแสดง Login
         }
     }
 
     async function handleLogin() {
         document.getElementById('loginError').innerText = "";
+        
+        // ถ้ายังไม่มี supabaseClient ลอง initSupabase ก่อน
         if (!supabaseClient) {
-            document.getElementById('loginError').innerText = "❌ กรุณากรอกและบันทึก URL/Key ของ Supabase ในโค้ดก่อนครับ";
+            initSupabase();
+        }
+        
+        if (!supabaseClient) {
+            document.getElementById('loginError').innerText = 
+                "❌ กรุณากรอก URL และ Key ของ Supabase ในแท็บตั้งค่าก่อนครับ";
             return;
         }
 
@@ -749,17 +769,27 @@
         let password = document.getElementById('loginPassword').value.trim();
 
         if(!email || !password) {
-            document.getElementById('loginError').innerText = "❌ กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน";
+            document.getElementById('loginError').innerText = 
+                "❌ กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน";
             return;
         }
+
+        // ✅ ข้อ 5: เพิ่ม Loading State ปุ่ม Login
+        let loginBtn = document.querySelector('#loginOverlay .btn-primary');
+        loginBtn.disabled = true;
+        loginBtn.innerText = "⏳ กำลังเข้าสู่ระบบ...";
 
         const { data, error } = await supabaseClient.auth.signInWithPassword({
             email: email,
             password: password
         });
 
+        loginBtn.disabled = false;
+        loginBtn.innerText = "🔓 เข้าสู่ระบบ";
+
         if (error) {
-            document.getElementById('loginError').innerText = "❌ เข้าสู่ระบบไม่สำเร็จ: " + error.message;
+            document.getElementById('loginError').innerText = 
+                "❌ เข้าสู่ระบบไม่สำเร็จ: " + error.message;
         } else {
             showApp();
         }
@@ -796,7 +826,8 @@
     }
 
     function updateDisplayFromSettings() {
-        document.getElementById('bankInfoShow').innerText = "บัญชีธนาคารสำหรับโอนเงิน: " + document.getElementById('bankInfoInput').value;
+        document.getElementById('bankInfoShow').innerText = 
+            "บัญชีธนาคารสำหรับโอนเงิน: " + document.getElementById('bankInfoInput').value;
         
         let logoUrl = document.getElementById('logoUrlInput').value;
         let logoContainer = document.getElementById('logoContainer');
@@ -884,23 +915,57 @@
         }
     }
 
+    // ✅ ข้อ 4 + ข้อ 5: เพิ่มป้องกันบันทึกซ้ำ + Loading State
     async function sendDataToSupabase() {
-        if(!supabaseClient) { return alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ!'); }
+        if(!supabaseClient) { 
+            return alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ!'); 
+        }
 
         let rawDate = document.getElementById('billingMonth').value;
-        if(!rawDate) { return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); }
+        if(!rawDate) { 
+            return alert('❌ กรุณาเลือกวันที่ออกบิลก่อนกดบันทึกครับ'); 
+        }
         let formattedDate = formatDateToDMY(rawDate);
+        let roomNo = document.getElementById('roomNo').value;
 
+        // ✅ ข้อ 5: Loading State
+        let btn = document.querySelector('.btn-success');
+        btn.disabled = true;
+        btn.innerText = "⏳ กำลังตรวจสอบ...";
+
+        // ✅ ข้อ 4: เช็คข้อมูลซ้ำ (ห้องเดียวกัน + วันเดียวกัน)
+        const { data: existingData } = await supabaseClient
+            .from('room_records')
+            .select('id')
+            .eq('room', roomNo)
+            .eq('month', formattedDate);
+
+        if (existingData && existingData.length > 0) {
+            let confirmSave = confirm(
+                `⚠️ พบข้อมูลห้อง ${roomNo} วันที่ ${formattedDate} อยู่แล้ว ${existingData.length} รายการ\n\nต้องการบันทึกซ้ำหรือไม่?`
+            );
+            if (!confirmSave) {
+                btn.disabled = false;
+                btn.innerText = "💾 บันทึกข้อมูลลงฐานข้อมูลคลาวด์";
+                return;
+            }
+        }
+
+        btn.innerText = "⏳ กำลังบันทึก...";
+
+        // ✅ ข้อ 3: เพิ่ม water_before และ elec_before ใน payload
         let payload = {
             month: formattedDate,
-            room: document.getElementById('roomNo').value,
+            room: roomNo,
             rent: parseFloat(document.getElementById('rentAmount').value) || 0,
+            water_before: parseFloat(document.getElementById('waterBefore').value) || 0, // ✅ เพิ่มใหม่
             water_unit: parseFloat(document.getElementById('waterUnit').innerText) || 0,
             water_total: parseFloat(document.getElementById('waterTotal').innerText) || 0,
-            water_after: parseFloat(document.getElementById('waterAfter').value) || 0, 
+            water_after: parseFloat(document.getElementById('waterAfter').value) || 0,
+            elec_before: parseFloat(document.getElementById('elecBefore').value) || 0,   // ✅ เพิ่มใหม่
             elec_unit: parseFloat(document.getElementById('elecUnit').innerText) || 0,
             elec_total: parseFloat(document.getElementById('elecTotal').innerText) || 0,
-            elec_after: parseFloat(document.getElementById('elecAfter').value) || 0,   
+            elec_after: parseFloat(document.getElementById('elecAfter').value) || 0,
             internet: parseFloat(document.getElementById('internetAmount').value) || 0,
             discount: parseFloat(document.getElementById('discountAmount').value) || 0,
             grand_total: parseFloat(document.getElementById('grandTotal').innerText) || 0
@@ -910,10 +975,14 @@
             .from('room_records')
             .insert([payload]);
 
+        // ✅ ข้อ 5: คืนค่าปุ่มเสมอไม่ว่าจะสำเร็จหรือไม่
+        btn.disabled = false;
+        btn.innerText = "💾 บันทึกข้อมูลลงฐานข้อมูลคลาวด์";
+
         if (error) {
             alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + error.message);
         } else {
-            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' ประจำวันที่ ' + formattedDate + ' สำเร็จ!');
+            alert('✅ บันทึกข้อมูลห้อง ' + payload.room + ' วันที่ ' + formattedDate + ' สำเร็จ!');
         }
     }
 
@@ -921,7 +990,7 @@
         if(!supabaseClient) return;
 
         let tbody = document.getElementById('historyTableBody');
-        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจากฐานข้อมูล Supabase...</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" style="color: blue; padding: 20px;">🔄 กำลังโหลดประวัติจากฐานข้อมูล...</td></tr>`;
         document.getElementById('paginationControls').style.display = 'none';
 
         const { data, error } = await supabaseClient
@@ -969,10 +1038,19 @@
 
         pageData.forEach(item => {
             let tr = document.createElement('tr');
-            let dateStr = item.timestamp ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) : '-';
+            let dateStr = item.timestamp 
+                ? new Date(item.timestamp).toLocaleString('th-TH', {hour12:false}) 
+                : '-';
             
-            let wBeforeShow = (parseFloat(item.water_after) - parseFloat(item.water_unit)) || 0;
-            let eBeforeShow = (parseFloat(item.elec_after) - parseFloat(item.elec_unit)) || 0;
+            // ✅ ข้อ 3: ใช้ water_before / elec_before จาก Database โดยตรง
+            // ถ้า column ยังไม่มี (ข้อมูลเก่า) ให้คำนวณแบบเดิมเป็น Fallback
+            let wBeforeShow = (item.water_before !== null && item.water_before !== undefined) 
+                ? item.water_before 
+                : (parseFloat(item.water_after) - parseFloat(item.water_unit)) || 0;
+            
+            let eBeforeShow = (item.elec_before !== null && item.elec_before !== undefined) 
+                ? item.elec_before 
+                : (parseFloat(item.elec_after) - parseFloat(item.elec_unit)) || 0;
 
             tr.innerHTML = `
                 <td>${dateStr}</td>
