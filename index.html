@@ -484,20 +484,22 @@
                         <div class="invoice-title">บิลค่าเช่าห้องพัก</div>
                         <div class="meta-grid">
                             <div class="meta-item">
-                                <label>ห้องที่:</label>
-                                <select id="roomNo" style="width: 100px; display: inline-block;" onchange="autoFetchLastMeter()">
-                                    <option value="1">1</option>
-                                    <option value="2">2</option>
-                                    <option value="3">3</option>
-                                    <option value="4">4</option>
-                                    <option value="5">5</option>
-                                    <option value="6">6</option>
-                                    <option value="7">7</option>
-                                    <option value="8">8</option>
-                                    <option value="9">9</option>
-                                    <option value="10">10</option>
-                                </select>
-                            </div>
+    <label style="font-size: 48px;">ห้องที่:</label>
+    <select id="roomNo" 
+        style="width: 130px; display: inline-block; font-size: 48px; font-weight: bold; height: 70px;" 
+        onchange="autoFetchLastMeter()">
+        <option value="1">1</option>
+        <option value="2">2</option>
+        <option value="3">3</option>
+        <option value="4">4</option>
+        <option value="5">5</option>
+        <option value="6">6</option>
+        <option value="7">7</option>
+        <option value="8">8</option>
+        <option value="9">9</option>
+        <option value="10">10</option>
+    </select>
+</div>
                             <div class="meta-item">
                                 <label>วันที่ออกบิล:</label>
                                 <input type="date" id="billingMonth" style="width: 160px; display: inline-block;" onchange="updateDateDisplay(this)">
@@ -894,27 +896,31 @@
     }
 
     async function autoFetchLastMeter() {
-        if (!supabaseClient) return;
-        let currentRoom = document.getElementById('roomNo').value;
-        
-        const { data, error } = await supabaseClient
-            .from('room_records')
-            .select('water_after, elec_after')
-            .eq('room', currentRoom)
-            .order('id', { ascending: false })
-            .limit(1);
+    if (!supabaseClient) return;
+    let currentRoom = document.getElementById('roomNo').value;
 
-        if (data && data.length > 0) {
-            document.getElementById('waterBefore').value = data[0].water_after || 0;
-            document.getElementById('elecBefore').value = data[0].elec_after || 0;
-            calculateInvoice();
-        } else {
-            document.getElementById('waterBefore').value = 0;
-            document.getElementById('elecBefore').value = 0;
-            calculateInvoice();
-        }
+    // ✅ Reset ช่องเลขครั้งนี้เป็น 0 ทุกครั้งที่สลับห้อง
+    document.getElementById('waterAfter').value = 0;
+    document.getElementById('elecAfter').value = 0;
+    
+    const { data, error } = await supabaseClient
+        .from('room_records')
+        .select('water_after, elec_after')
+        .eq('room', currentRoom)
+        .order('id', { ascending: false })
+        .limit(1);
+
+    if (data && data.length > 0) {
+        document.getElementById('waterBefore').value = data[0].water_after || 0;
+        document.getElementById('elecBefore').value = data[0].elec_after || 0;
+        calculateInvoice();
+    } else {
+        document.getElementById('waterBefore').value = 0;
+        document.getElementById('elecBefore').value = 0;
+        calculateInvoice();
     }
-
+}
+    
     // ✅ ข้อ 4 + ข้อ 5: เพิ่มป้องกันบันทึกซ้ำ + Loading State
     async function sendDataToSupabase() {
         if(!supabaseClient) { 
