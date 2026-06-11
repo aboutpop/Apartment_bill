@@ -646,36 +646,44 @@
 <div id="config-tab" class="tab-content">
     <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
 
-    <!-- ✅ เพิ่มปุ่มนี้เข้าไป -->
     <a href="setup.html" target="_blank">
         <button class="btn btn-primary" style="margin-bottom:20px;">
             📖 คู่มือการติดตั้งและตั้งค่า Supabase
         </button>
     </a>
 
+    <!-- ✅ เพิ่ม supabaseUrl กลับมา (หายไปจากโค้ด) -->
     <div class="config-group">
-                <label>Supabase Anon API Key:</label>
-                <input type="text" id="supabaseKey" style="text-align:left;"
-                    placeholder="ใส่คีย์สาธารณะ anon ของคุณ" oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>ข้อมูลบัญชีธนาคาร (แสดงท้ายบิล):</label>
-                <input type="text" id="bankInfoInput" style="text-align:left;"
-                    value="ธนาคารกสิกรไทย เลขที่บัญชี 123-4-56789-0 ชื่อบัญชี สมชาย ใจดี"
-                    oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>ลิงก์รูปภาพโลโก้หอพัก (Direct URL):</label>
-                <input type="text" id="logoUrlInput" style="text-align:left;"
-                    placeholder="ใส่ลิงก์รูปภาพโลโก้ของคุณที่นี่" oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
-                <input type="text" id="qrUrlInput" style="text-align:left;"
-                    placeholder="ใส่ลิงก์รูปภาพ QR Code" oninput="saveSettings()">
-            </div>
-        </div>
+        <label>Supabase URL:</label>
+        <input type="text" id="supabaseUrl" style="text-align:left;"
+            placeholder="https://xyz.supabase.co" oninput="saveSettings()">
+    </div>
 
+    <div class="config-group">
+        <label>Supabase Anon API Key:</label>
+        <input type="text" id="supabaseKey" style="text-align:left;"
+            placeholder="ใส่คีย์สาธารณะ anon ของคุณ" oninput="saveSettings()">
+    </div>
+
+    <div class="config-group">
+        <label>ข้อมูลบัญชีธนาคาร (แสดงท้ายบิล):</label>
+        <input type="text" id="bankInfoInput" style="text-align:left;"
+            value="ธนาคารกสิกรไทย เลขที่บัญชี 123-4-56789-0 ชื่อบัญชี สมชาย ใจดี"
+            oninput="saveSettings()">
+    </div>
+
+    <div class="config-group">
+        <label>ลิงก์รูปภาพโลโก้หอพัก (Direct URL):</label>
+        <input type="text" id="logoUrlInput" style="text-align:left;"
+            placeholder="ใส่ลิงก์รูปภาพโลโก้ของคุณที่นี่" oninput="saveSettings()">
+    </div>
+
+    <div class="config-group">
+        <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
+        <input type="text" id="qrUrlInput" style="text-align:left;"
+            placeholder="ใส่ลิงก์รูปภาพ QR Code" oninput="saveSettings()">
+    </div>
+</div>
     </div>
 </div>
 
