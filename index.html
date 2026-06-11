@@ -642,15 +642,18 @@
             </div>
         </div>
 
-        <!-- แท็บตั้งค่า -->
-        <div id="config-tab" class="tab-content">
-            <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
-            <div class="config-group">
-                <label>Supabase URL:</label>
-                <input type="text" id="supabaseUrl" style="text-align:left;"
-                    placeholder="https://xyz.supabase.co" oninput="saveSettings()">
-            </div>
-            <div class="config-group">
+<!-- แท็บตั้งค่า -->
+<div id="config-tab" class="tab-content">
+    <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
+
+    <!-- ✅ เพิ่มปุ่มนี้เข้าไป -->
+    <a href="setup.html" target="_blank">
+        <button class="btn btn-primary" style="margin-bottom:20px;">
+            📖 คู่มือการติดตั้งและตั้งค่า Supabase
+        </button>
+    </a>
+
+    <div class="config-group">
                 <label>Supabase Anon API Key:</label>
                 <input type="text" id="supabaseKey" style="text-align:left;"
                     placeholder="ใส่คีย์สาธารณะ anon ของคุณ" oninput="saveSettings()">
