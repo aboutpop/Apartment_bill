@@ -529,6 +529,12 @@
                 <span class="alert-icon">⚠️</span>
                 <div>Free Tier ของ Supabase สามารถสร้างได้ <strong>2 Projects ต่อ 1 บัญชี</strong> ถ้าต้องการมากกว่านี้ต้องอัปเกรดแพลน</div>
             </div>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💡</span>
+                <div><strong>อย่าสับสน:</strong> "Database Password" ที่ตั้งในขั้นตอนนี้ <u>ไม่ใช่</u> รหัสผ่านที่ใช้ Login เข้าเว็บออกบิล
+                รหัสผ่านสำหรับ Login เข้าเว็บจะตั้งทีหลังในขั้นตอนที่ 5 (สร้างบัญชีผู้ใช้)</div>
+            </div>
         </div>
 
         <!-- Section 3: Create Table -->
@@ -611,6 +617,7 @@
         <!-- Section 5: Create User -->
         <div class="section" id="create-user">
             <h2>5️⃣ สร้างบัญชีผู้ใช้สำหรับ Login</h2>
+            <p>บัญชีนี้คือ <strong>Email/Password ที่จะใช้ Login เข้าเว็บออกบิล</strong> (ไม่เกี่ยวกับบัญชี Supabase ที่สมัครไว้ในขั้นตอนที่ 1)</p>
             <ol class="steps">
                 <li>
                     <div class="step-body">
@@ -627,4 +634,184 @@
                 <li>
                     <div class="step-body">
                         <strong>กรอก Email และ Password</strong>
-                        <p>ใส่อีเมลและรหัสผ่านที่คุณต้องการใช้
+                        <p>ใส่อีเมลและรหัสผ่านที่คุณต้องการใช้ Login เข้าเว็บออกบิล (จดไว้กันลืม)</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>เปิด "Auto Confirm User" ✅</strong>
+                        <p>ก่อนกดสร้าง ให้เปิดสวิตช์ <strong>"Auto Confirm User"</strong> ด้วย (ถ้ามี) เพื่อให้ Login ได้ทันทีโดยไม่ต้องกดยืนยันอีเมล</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>คลิก "Create user"</strong>
+                        <p>บัญชีนี้จะใช้สำหรับ Login เข้าเว็บออกบิลในขั้นตอนสุดท้าย</p>
+                    </div>
+                </li>
+            </ol>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">👥</span>
+                <div>ถ้ามีหลายคนช่วยกันออกบิล (เช่น เจ้าของ + คนดูแล) สามารถทำซ้ำขั้นตอนนี้เพื่อสร้างหลายบัญชีได้ ทุกคนจะเห็นข้อมูลห้องเดียวกันหมด</div>
+            </div>
+        </div>
+
+        <!-- Section 6: Get URL & Key -->
+        <div class="section" id="get-keys">
+            <h2>6️⃣ ดึง URL และ API Key</h2>
+            <p>ค่า 2 อย่างนี้คือ "กุญแจ" ที่ใช้เชื่อมเว็บออกบิลเข้ากับฐานข้อมูลของคุณ</p>
+            <ol class="steps">
+                <li>
+                    <div class="step-body">
+                        <strong>ไปที่ Project Settings</strong>
+                        <p>คลิกไอคอน ⚙️ <strong>Project Settings</strong> ที่เมนูซ้ายมือล่างสุด</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>เลือกเมนู "API"</strong>
+                        <p>จะเห็นข้อมูล <strong>Project URL</strong> และ <strong>API Keys</strong></p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>คัดลอก "Project URL"</strong>
+                        <p>หน้าตาจะเป็น <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">https://xxxxxxxx.supabase.co</code></p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>คัดลอกคีย์ "anon" / "public"</strong>
+                        <p>เป็นคีย์ตัวยาวๆ ที่ขึ้นต้นด้วย <code style="background:#f0f0f0;padding:2px 6px;border-radius:3px;">eyJ...</code></p>
+                    </div>
+                </li>
+            </ol>
+
+            <div class="alert alert-danger">
+                <span class="alert-icon">🚫</span>
+                <div>ห้ามใช้หรือแชร์คีย์ที่ชื่อ <strong>"service_role"</strong> เด็ดขาด! คีย์นี้สามารถข้าม RLS และเข้าถึงข้อมูลทั้งหมดได้
+                ให้ใช้แค่คีย์ <strong>"anon" / "public"</strong> เท่านั้นกับเว็บนี้</div>
+            </div>
+        </div>
+
+        <!-- Section 7: Fill Config -->
+        <div class="section" id="fill-config">
+            <h2>7️⃣ กรอกข้อมูลเข้าเว็บออกบิล</h2>
+            <p>ขั้นตอนสุดท้าย นำค่าที่ได้จากขั้นตอนที่ 6 มากรอกในเว็บออกบิล</p>
+
+            <ol class="steps">
+                <li>
+                    <div class="step-body">
+                        <strong>เปิดเว็บออกบิล (index.html)</strong>
+                        <p>จะเจอหน้า Login</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>คลิก "⚙️ ตั้งค่าฐานข้อมูล Supabase ของฉัน (สำหรับผู้ใช้ใหม่)"</strong>
+                        <p>ปุ่มนี้อยู่ด้านล่างของหน้า Login ไม่ต้อง Login ก่อนก็กดได้</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>วาง Supabase URL และ Anon Key</strong>
+                        <p>นำค่าที่คัดลอกไว้จากขั้นตอนที่ 6 มาวางในช่องที่ตรงกัน</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>กำหนดจำนวนห้องทั้งหมด</strong>
+                        <p>ใส่จำนวนห้องของหอพักคุณ (ค่าเริ่มต้น 10) ระบบจะสร้างเมนูเลือกห้องให้ตามจำนวนนี้ — ปรับเพิ่ม/ลดทีหลังได้เสมอที่แท็บ "ตั้งค่าระบบ"</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>กด "บันทึกและกลับไปเข้าสู่ระบบ"</strong>
+                        <p>ระบบจะพากลับไปหน้า Login อัตโนมัติ</p>
+                    </div>
+                </li>
+                <li>
+                    <div class="step-body">
+                        <strong>Login ด้วย Email/Password จากขั้นตอนที่ 5</strong>
+                        <p>เข้าสู่ระบบสำเร็จ ก็พร้อมใช้งานได้ทันที 🎉</p>
+                    </div>
+                </li>
+            </ol>
+
+            <div class="alert alert-success">
+                <span class="alert-icon">✅</span>
+                <div>เสร็จแล้ว! ค่าที่กรอกจะถูกจดจำไว้ในเบราว์เซอร์นี้ ครั้งต่อไปเปิดเว็บมาจะ Login ได้เลยโดยไม่ต้องตั้งค่าซ้ำ</div>
+            </div>
+
+            <div class="alert alert-warning">
+                <span class="alert-icon">📱</span>
+                <div>ถ้าเปลี่ยนไปใช้เครื่องอื่น หรือเบราว์เซอร์อื่น (เช่น จาก Chrome ไป Safari) จะต้องทำขั้นตอนนี้ใหม่ เพราะการตั้งค่าเก็บแยกตามเบราว์เซอร์</div>
+            </div>
+        </div>
+
+        <!-- Section: Troubleshoot -->
+        <div class="section" id="troubleshoot">
+            <h2>🔧 แก้ปัญหาที่พบบ่อย</h2>
+
+            <table class="info-table">
+                <thead>
+                    <tr><th>ปัญหา</th><th>สาเหตุที่เป็นไปได้</th><th>วิธีแก้</th></tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>กดเข้าสู่ระบบแล้วไม่ขึ้นอะไร / ค้าง</td>
+                        <td>ยังไม่ได้ตั้งค่า Supabase URL/Key</td>
+                        <td>กดปุ่ม "⚙️ ตั้งค่าฐานข้อมูล" ที่หน้า Login แล้วกรอกใหม่ตามขั้นตอน 6-7</td>
+                    </tr>
+                    <tr>
+                        <td>เข้าสู่ระบบไม่สำเร็จ: Invalid login credentials</td>
+                        <td>อีเมล/รหัสผ่านผิด หรือยังไม่ได้เปิด Auto Confirm User</td>
+                        <td>ตรวจสอบใน Supabase → Authentication → Users ว่าสร้างบัญชีไว้แล้ว และสถานะเป็น Confirmed</td>
+                    </tr>
+                    <tr>
+                        <td>บันทึก/โหลดข้อมูลไม่ได้ (Failed to fetch)</td>
+                        <td>URL หรือ Key พิมพ์ผิด / เว้นวรรคเกิน</td>
+                        <td>ไปที่แท็บ "ตั้งค่าระบบ" ตรวจสอบและวาง URL/Key ใหม่อีกครั้ง</td>
+                    </tr>
+                    <tr>
+                        <td>จำนวนห้องในเมนูไม่ตรงกับห้องจริง</td>
+                        <td>ยังไม่ได้ปรับค่า "จำนวนห้องทั้งหมดในหอพัก"</td>
+                        <td>ไปที่แท็บ "ตั้งค่าระบบ" แก้ตัวเลขจำนวนห้อง เมนูจะอัปเดตอัตโนมัติ</td>
+                    </tr>
+                    <tr>
+                        <td>เปิดเว็บจากเครื่อง/เบราว์เซอร์อื่นแล้วต้องตั้งค่าใหม่ทุกครั้ง</td>
+                        <td>การตั้งค่าเก็บไว้ใน localStorage ของเบราว์เซอร์นั้นๆ เท่านั้น</td>
+                        <td>ทำตามขั้นตอนที่ 6-7 ซ้ำในเบราว์เซอร์ใหม่ (ค่าจะถูกจดจำไว้ในเบราว์เซอร์นั้นแทน)</td>
+                    </tr>
+                    <tr>
+                        <td>คนอื่นที่ใช้เครื่อง/เบราว์เซอร์เดียวกันเห็นข้อมูลของฉัน</td>
+                        <td>ใช้ Supabase URL/Key เดียวกันโดยไม่ตั้งใจ</td>
+                        <td>ไปที่แท็บ "ตั้งค่าระบบ" กด "🗑️ ล้างการตั้งค่าทั้งหมด" แล้วให้แต่ละคนตั้งค่าของตัวเองตามขั้นตอน 6-7</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="alert alert-info">
+                <span class="alert-icon">💬</span>
+                <div>ถ้าทำตามทุกขั้นตอนแล้วยังติดปัญหา ลองปิด-เปิดเบราว์เซอร์ใหม่ หรือลองเปิดเว็บในโหมดไม่ระบุตัวตน (Incognito) เพื่อตัดปัญหาเรื่องการตั้งค่าเก่าค้างอยู่</div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script>
+    function copyCode(elementId) {
+        const block = document.getElementById(elementId);
+        const text = block.innerText.replace('📋 Copy', '').trim();
+        navigator.clipboard.writeText(text).then(() => {
+            const btn = block.querySelector('.copy-btn');
+            const original = btn.innerText;
+            btn.innerText = '✅ คัดลอกแล้ว';
+            setTimeout(() => { btn.innerText = original; }, 1500);
+        });
+    }
+</script>
+</body>
+</html>
