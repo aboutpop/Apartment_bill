@@ -1,0 +1,921 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard จัดการห้องเช่า</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 3px solid #667eea;
+        }
+
+        .header-info {
+            flex: 1;
+        }
+
+        .header-info h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .utility-prices {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .price-tag {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .btn-edit-prices {
+            background: #f59e0b;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-edit-prices:hover {
+            background: #d97706;
+            transform: translateY(-2px);
+        }
+
+        /* Summary Stats */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 8px;
+        }
+
+        .stat-card .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-card.occupied .number { color: #10b981; }
+        .stat-card.vacant .number { color: #6b7280; }
+        .stat-card.unpaid .number { color: #ef4444; }
+
+        /* Room Grid */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .room-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .room-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+
+        .room-card.occupied {
+            border-color: #10b981;
+        }
+
+        .room-card.vacant {
+            border-color: #d1d5db;
+            background: #f9fafb;
+        }
+
+        .room-card.unpaid {
+            border-color: #ef4444;
+        }
+
+        .room-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 12px;
+            line-height: 1;
+        }
+
+        .tenant-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+        }
+
+        .room-details {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        .status-badge.paid {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-badge.unpaid {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .status-badge.vacant {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            max-width: 600px;
+            width: 100%;
+            padding: 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            position: relative;
+            margin: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .modal-logo {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid #667eea;
+        }
+
+        .modal-room-number {
+            font-size: 48px;
+            font-weight: bold;
+            color: #667eea;
+            line-height: 1;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: #ef4444;
+            color: white;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #dc2626;
+            transform: rotate(90deg);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.3s;
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-save:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Alert */
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .alert-error {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 2px solid #fecaca;
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border: 2px solid #a7f3d0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .utility-prices {
+                justify-content: center;
+            }
+
+            .room-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <div>กำลังโหลดข้อมูล...</div>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" style="display: none;">
+            <div class="alert alert-error" id="errorMessage"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" style="display: none;">
+            <!-- Header -->
+            <div class="header">
+                <img id="logo" src="" alt="Logo" class="logo" style="display: none;">
+                <div class="header-info">
+                    <h1>🏠 Dashboard จัดการห้องเช่า</h1>
+                    <div class="utility-prices" id="utilityPrices">
+                        <!-- ราคาสาธารณูปโภคจะถูกใส่ที่นี่ -->
+                    </div>
+                </div>
+                <button class="btn-edit-prices" onclick="openPricesModal()">⚙️ แก้ไขราคา</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats">
+                <div class="stat-card">
+                    <h3>ห้องทั้งหมด</h3>
+                    <div class="number" id="totalRooms">0</div>
+                </div>
+                <div class="stat-card occupied">
+                    <h3>ห้องที่มีผู้เช่า</h3>
+                    <div class="number" id="occupiedRooms">0</div>
+                </div>
+                <div class="stat-card vacant">
+                    <h3>ห้องว่าง</h3>
+                    <div class="number" id="vacantRooms">0</div>
+                </div>
+                <div class="stat-card unpaid">
+                    <h3>ค้างชำระ</h3>
+                    <div class="number" id="unpaidRooms">0</div>
+                </div>
+            </div>
+
+            <!-- Room Grid -->
+            <div class="room-grid" id="roomGrid">
+                <!-- การ์ดห้องจะถูกใส่ที่นี่ -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Detail Modal -->
+    <div class="modal" id="roomModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()">×</button>
+            <div class="modal-header">
+                <img id="modalLogo" src="" alt="Logo" class="modal-logo" style="display: none;">
+                <div class="modal-room-number" id="modalRoomNumber">101</div>
+            </div>
+
+            <form id="roomForm" onsubmit="saveRoomData(event)">
+                <div class="form-group">
+                    <label>👤 ชื่อ-นามสกุล ผู้เช่า</label>
+                    <input type="text" id="tenantName" placeholder="กรอกชื่อผู้เช่า">
+                </div>
+
+                <div class="form-group">
+                    <label>📞 หมายเลขโทรศัพท์</label>
+                    <input type="tel" id="phone" placeholder="08x-xxx-xxxx">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>💰 ค่าเช่าเริ่มต้น (บาท)</label>
+                        <input type="number" id="baseRent" step="0.01" placeholder="2500">
+                    </div>
+                    <div class="form-group">
+                        <label>💵 เงินมัดจำ (บาท)</label>
+                        <input type="number" id="deposit" step="0.01" placeholder="5000">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>💧 เลขมิเตอร์น้ำล่าสุด</label>
+                        <input type="number" id="lastWaterMeter" step="0.01" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>⚡ เลขมิเตอร์ไฟล่าสุด</label>
+                        <input type="number" id="lastElecMeter" step="0.01" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>🏠 ค่าเช่าเดือนล่าสุด (บาท)</label>
+                        <input type="number" id="currentRent" step="0.01" placeholder="2500">
+                    </div>
+                    <div class="form-group">
+                        <label>💳 ยอดรวมทั้งหมด (บาท)</label>
+                        <input type="number" id="totalAmount" step="0.01" placeholder="0">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>⚠️ ค่าปรับ (บาท)</label>
+                        <input type="number" id="penalty" step="0.01" placeholder="0">
+                    </div>
+                    <div class="form-group">
+                        <label>✅ สถานะการชำระเงิน</label>
+                        <select id="paymentStatus">
+                            <option value="paid">ชำระแล้ว</option>
+                            <option value="unpaid">ค้างชำระ</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-save" id="saveBtn">💾 บันทึกข้อมูล</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Utility Prices Modal -->
+    <div class="modal" id="pricesModal">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closePricesModal()">×</button>
+            <h2 style="margin-bottom: 24px; color: #333;">⚙️ ตั้งค่าราคาสาธารณูปโภค</h2>
+
+            <form id="pricesForm" onsubmit="savePrices(event)">
+                <div class="form-group">
+                    <label>💧 ค่าน้ำ (บาท/หน่วย)</label>
+                    <input type="number" id="waterPrice" step="0.01" placeholder="20" required>
+                </div>
+
+                <div class="form-group">
+                    <label>⚡ ค่าไฟ (บาท/หน่วย)</label>
+                    <input type="number" id="elecPrice" step="0.01" placeholder="6" required>
+                </div>
+
+                <div class="form-group">
+                    <label>🌐 อินเทอร์เน็ต (บาท/เดือน)</label>
+                    <input type="number" id="internetPrice" step="0.01" placeholder="0">
+                </div>
+
+                <button type="submit" class="btn-save" id="savePricesBtn">💾 บันทึกราคา</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let supabase;
+        let roomsData = [];
+        let utilityPrices = { water: 0, elec: 0, internet: 0 };
+        let currentRoomNumber = null;
+
+        // Initialize
+        async function init() {
+            try {
+                // Get Supabase config from localStorage
+                const supabaseUrl = localStorage.getItem('SUPABASE_URL');
+                const supabaseAnonKey = localStorage.getItem('SUPABASE_ANON_KEY');
+
+                if (!supabaseUrl || !supabaseAnonKey) {
+                    showError('กรุณาตั้งค่า Supabase URL และ Anon Key ก่อน');
+                    return;
+                }
+
+                // Initialize Supabase
+                supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+
+                // Check authentication
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session) {
+                    window.location.href = 'index.html';
+                    return;
+                }
+
+                // Load data
+                await loadUtilityPrices();
+                await loadRoomsData();
+                renderDashboard();
+
+                // Hide loading, show main content
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+
+            } catch (error) {
+                showError('เกิดข้อผิดพลาด: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Load utility prices from database
+        async function loadUtilityPrices() {
+            const { data, error } = await supabase
+                .from('utility_prices')
+                .select('*')
+                .order('id', { ascending: false })
+                .limit(1);
+
+            if (error) {
+                console.error('Error loading utility prices:', error);
+                return;
+            }
+
+            if (data && data.length > 0) {
+                utilityPrices = {
+                    water: data[0].water_price || 0,
+                    elec: data[0].elec_price || 0,
+                    internet: data[0].internet_price || 0
+                };
+            }
+        }
+
+        // Load rooms data
+        async function loadRoomsData() {
+            const { data, error } = await supabase
+                .from('rooms_data')
+                .select('*')
+                .order('room_number');
+
+            if (error) {
+                console.error('Error loading rooms data:', error);
+                return;
+            }
+
+            roomsData = data || [];
+
+            // Create empty rooms for rooms that don't exist in database
+            const totalRooms = parseInt(localStorage.getItem('TOTAL_ROOMS') || '10');
+            for (let i = 1; i <= totalRooms; i++) {
+                const roomNum = i.toString();
+                if (!roomsData.find(r => r.room_number === roomNum)) {
+                    roomsData.push({
+                        room_number: roomNum,
+                        tenant_name: '',
+                        phone: '',
+                        deposit: 0,
+                        base_rent: 0,
+                        current_rent: 0,
+                        last_water_meter: 0,
+                        last_elec_meter: 0,
+                        is_occupied: false,
+                        payment_status: 'paid',
+                        total_amount: 0,
+                        penalty: 0
+                    });
+                }
+            }
+
+            // Sort by room number
+            roomsData.sort((a, b) => parseInt(a.room_number) - parseInt(b.room_number));
+        }
+
+        // Render dashboard
+        function renderDashboard() {
+            // Render logo
+            const logoUrl = localStorage.getItem('LOGO_URL');
+            if (logoUrl) {
+                document.getElementById('logo').src = logoUrl;
+                document.getElementById('logo').style.display = 'block';
+                document.getElementById('modalLogo').src = logoUrl;
+                document.getElementById('modalLogo').style.display = 'block';
+            }
+
+            // Render utility prices
+            const pricesHtml = `
+                <div class="price-tag">💧 น้ำ: ${utilityPrices.water} บาท/หน่วย</div>
+                <div class="price-tag">⚡ ไฟ: ${utilityPrices.elec} บาท/หน่วย</div>
+                ${utilityPrices.internet > 0 ? `<div class="price-tag">🌐 อินเทอร์เน็ต: ${utilityPrices.internet} บาท/เดือน</div>` : ''}
+            `;
+            document.getElementById('utilityPrices').innerHTML = pricesHtml;
+
+            // Render stats
+            const totalRooms = roomsData.length;
+            const occupiedRooms = roomsData.filter(r => r.is_occupied).length;
+            const vacantRooms = totalRooms - occupiedRooms;
+            const unpaidRooms = roomsData.filter(r => r.is_occupied && r.payment_status === 'unpaid').length;
+
+            document.getElementById('totalRooms').textContent = totalRooms;
+            document.getElementById('occupiedRooms').textContent = occupiedRooms;
+            document.getElementById('vacantRooms').textContent = vacantRooms;
+            document.getElementById('unpaidRooms').textContent = unpaidRooms;
+
+            // Render room cards
+            const gridHtml = roomsData.map(room => {
+                const isOccupied = room.is_occupied || room.tenant_name;
+                const isUnpaid = isOccupied && room.payment_status === 'unpaid';
+                const cardClass = isUnpaid ? 'unpaid' : (isOccupied ? 'occupied' : 'vacant');
+                
+                let statusBadge = '';
+                if (isUnpaid) {
+                    statusBadge = '<span class="status-badge unpaid">❌ ค้างชำระ</span>';
+                } else if (isOccupied) {
+                    statusBadge = '<span class="status-badge paid">✅ ชำระแล้ว</span>';
+                } else {
+                    statusBadge = '<span class="status-badge vacant">⚪ ว่าง</span>';
+                }
+
+                return `
+                    <div class="room-card ${cardClass}" onclick="openRoomModal('${room.room_number}')">
+                        <div class="room-number">${room.room_number}</div>
+                        <div class="tenant-name">${room.tenant_name || '(ว่าง)'}</div>
+                        <div class="room-details">
+                            ${room.phone ? `📞 ${room.phone}<br>` : ''}
+                            ${room.base_rent > 0 ? `💰 ค่าเช่า: ${room.base_rent.toLocaleString()} บาท<br>` : ''}
+                            ${room.total_amount > 0 ? `💳 ยอดรวม: ${room.total_amount.toLocaleString()} บาท` : ''}
+                        </div>
+                        ${statusBadge}
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('roomGrid').innerHTML = gridHtml;
+        }
+
+        // Open room modal
+        function openRoomModal(roomNumber) {
+            currentRoomNumber = roomNumber;
+            const room = roomsData.find(r => r.room_number === roomNumber);
+
+            document.getElementById('modalRoomNumber').textContent = roomNumber;
+            document.getElementById('tenantName').value = room.tenant_name || '';
+            document.getElementById('phone').value = room.phone || '';
+            document.getElementById('baseRent').value = room.base_rent || '';
+            document.getElementById('deposit').value = room.deposit || '';
+            document.getElementById('lastWaterMeter').value = room.last_water_meter || '';
+            document.getElementById('lastElecMeter').value = room.last_elec_meter || '';
+            document.getElementById('currentRent').value = room.current_rent || '';
+            document.getElementById('totalAmount').value = room.total_amount || '';
+            document.getElementById('penalty').value = room.penalty || '';
+            document.getElementById('paymentStatus').value = room.payment_status || 'paid';
+
+            document.getElementById('roomModal').classList.add('active');
+        }
+
+        // Close room modal
+        function closeModal() {
+            document.getElementById('roomModal').classList.remove('active');
+            currentRoomNumber = null;
+        }
+
+        // Save room data
+        async function saveRoomData(event) {
+            event.preventDefault();
+
+            const saveBtn = document.getElementById('saveBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ กำลังบันทึก...';
+
+            try {
+                const roomData = {
+                    room_number: currentRoomNumber,
+                    tenant_name: document.getElementById('tenantName').value,
+                    phone: document.getElementById('phone').value,
+                    base_rent: parseFloat(document.getElementById('baseRent').value) || 0,
+                    deposit: parseFloat(document.getElementById('deposit').value) || 0,
+                    last_water_meter: parseFloat(document.getElementById('lastWaterMeter').value) || 0,
+                    last_elec_meter: parseFloat(document.getElementById('lastElecMeter').value) || 0,
+                    current_rent: parseFloat(document.getElementById('currentRent').value) || 0,
+                    total_amount: parseFloat(document.getElementById('totalAmount').value) || 0,
+                    penalty: parseFloat(document.getElementById('penalty').value) || 0,
+                    payment_status: document.getElementById('paymentStatus').value,
+                    is_occupied: !!document.getElementById('tenantName').value,
+                    updated_at: new Date().toISOString()
+                };
+
+                // Check if room exists in database
+                const existingRoom = roomsData.find(r => r.room_number === currentRoomNumber && r.id);
+
+                if (existingRoom) {
+                    // Update existing room
+                    const { error } = await supabase
+                        .from('rooms_data')
+                        .update(roomData)
+                        .eq('id', existingRoom.id);
+
+                    if (error) throw error;
+                } else {
+                    // Insert new room
+                    const { error } = await supabase
+                        .from('rooms_data')
+                        .insert([roomData]);
+
+                    if (error) throw error;
+                }
+
+                // Sync to room_records (update latest record)
+                await syncToRoomRecords(roomData);
+
+                // Reload data
+                await loadRoomsData();
+                renderDashboard();
+                closeModal();
+
+                alert('✅ บันทึกข้อมูลสำเร็จ');
+
+            } catch (error) {
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+                console.error(error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 บันทึกข้อมูล';
+            }
+        }
+
+        // Sync to room_records (update latest record)
+        async function syncToRoomRecords(roomData) {
+            try {
+                // Find the latest record for this room
+                const { data: latestRecord, error: fetchError } = await supabase
+                    .from('room_records')
+                    .select('*')
+                    .eq('room', roomData.room_number)
+                    .order('id', { ascending: false })
+                    .limit(1);
+
+                if (fetchError) {
+                    console.error('Error fetching latest record:', fetchError);
+                    return;
+                }
+
+                if (latestRecord && latestRecord.length > 0) {
+                    // Update the latest record
+                    const updateData = {
+                        rent: roomData.current_rent,
+                        water_after: roomData.last_water_meter,
+                        elec_after: roomData.last_elec_meter,
+                        grand_total: roomData.total_amount
+                    };
+
+                    const { error: updateError } = await supabase
+                        .from('room_records')
+                        .update(updateData)
+                        .eq('id', latestRecord[0].id);
+
+                    if (updateError) {
+                        console.error('Error updating room_records:', updateError);
+                    }
+                }
+            } catch (error) {
+                console.error('Error syncing to room_records:', error);
+            }
+        }
+
+        // Open prices modal
+        function openPricesModal() {
+            document.getElementById('waterPrice').value = utilityPrices.water || '';
+            document.getElementById('elecPrice').value = utilityPrices.elec || '';
+            document.getElementById('internetPrice').value = utilityPrices.internet || '';
+            document.getElementById('pricesModal').classList.add('active');
+        }
+
+        // Close prices modal
+        function closePricesModal() {
+            document.getElementById('pricesModal').classList.remove('active');
+        }
+
+        // Save utility prices
+        async function savePrices(event) {
+            event.preventDefault();
+
+            const saveBtn = document.getElementById('savePricesBtn');
+            saveBtn.disabled = true;
+            saveBtn.textContent = '⏳ กำลังบันทึก...';
+
+            try {
+                const pricesData = {
+                    water_price: parseFloat(document.getElementById('waterPrice').value) || 0,
+                    elec_price: parseFloat(document.getElementById('elecPrice').value) || 0,
+                    internet_price: parseFloat(document.getElementById('internetPrice').value) || 0,
+                    updated_at: new Date().toISOString()
+                };
+
+                // Insert new record (we always keep the latest one)
+                const { error } = await supabase
+                    .from('utility_prices')
+                    .insert([pricesData]);
+
+                if (error) throw error;
+
+                // Reload prices
+                await loadUtilityPrices();
+                renderDashboard();
+                closePricesModal();
+
+                alert('✅ บันทึกราคาสำเร็จ');
+
+            } catch (error) {
+                alert('❌ เกิดข้อผิดพลาด: ' + error.message);
+                console.error(error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.textContent = '💾 บันทึกราคา';
+            }
+        }
+
+        // Show error
+        function showError(message) {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('errorMessage').textContent = message;
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
