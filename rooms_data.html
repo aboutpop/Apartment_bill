@@ -86,6 +86,25 @@
             transform: translateY(-2px);
         }
 
+        .btn-back {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.3s;
+        }
+
+        .btn-back:hover {
+            background: #4b5563;
+            transform: translateY(-2px);
+        }
+
         /* Summary Stats */
         .stats {
             display: grid;
@@ -416,6 +435,9 @@
         <!-- Error State -->
         <div id="error" style="display: none;">
             <div class="alert alert-error" id="errorMessage"></div>
+            <button class="btn-back" onclick="window.location.href='index.html'" style="margin-top: 16px;">
+                ← กลับไปหน้า Login
+            </button>
         </div>
 
         <!-- Main Content -->
@@ -429,7 +451,12 @@
                         <!-- ราคาสาธารณูปโภคจะถูกใส่ที่นี่ -->
                     </div>
                 </div>
-                <button class="btn-edit-prices" onclick="openPricesModal()">⚙️ แก้ไขราคา</button>
+                <div style="display: flex; gap: 12px;">
+                    <button class="btn-back" onclick="window.location.href='index.html'">
+                        ← กลับไปหน้าหลัก
+                    </button>
+                    <button class="btn-edit-prices" onclick="openPricesModal()">⚙️ แก้ไขราคา</button>
+                </div>
             </div>
 
             <!-- Stats -->
@@ -535,7 +562,7 @@
     <div class="modal" id="pricesModal">
         <div class="modal-content">
             <button class="close-btn" onclick="closePricesModal()">×</button>
-            <h2 style="margin-bottom: 24px; color: #333;">⚙️ ตั้งค่าราคาสาธารณูปโภค</h2>
+            <h2 style="margin-bottom: 24px; color: #333;">️ ตั้งค่าราคาสาธารณูปโภค</h2>
 
             <form id="pricesForm" onsubmit="savePrices(event)">
                 <div class="form-group">
@@ -559,8 +586,8 @@
     </div>
 
     <script>
-        // Global variables
-        let supabaseClient;
+        // ✅ เปลี่ยนชื่อตัวแปรจาก 'supabase' เป็น 'supabaseClient' เพื่อแก้ปัญหา "already been declared"
+        let supabaseClient = null;
         let roomsData = [];
         let utilityPrices = { water: 0, elec: 0, internet: 0 };
         let currentRoomNumber = null;
@@ -568,25 +595,40 @@
         // Initialize
         async function init() {
             try {
+                console.log(' Starting init...');
+
                 // Get Supabase config from localStorage
                 const supabaseUrl = localStorage.getItem('SUPABASE_URL');
                 const supabaseAnonKey = localStorage.getItem('SUPABASE_ANON_KEY');
 
-               if (!supabaseUrl || !supabaseAnonKey) {
-    // Redirect ไปหน้าตั้งค่า
-    window.location.href = 'index.html';
-    return;
-}
+                console.log('📋 URL:', supabaseUrl ? 'มีค่า' : 'ไม่มีค่า');
+                console.log('📋 Key:', supabaseAnonKey ? 'มีค่า' : 'ไม่มีค่า');
 
-                // Initialize Supabase
-                supabase = window.supabaseClient.createClient(supabaseUrl, supabaseAnonKey);
+                if (!supabaseUrl || !supabaseAnonKey) {
+                    showError('กรุณาตั้งค่า Supabase URL และ Anon Key ก่อน (ไปที่หน้า index.html แล้วกดปุ่มตั้งค่า)');
+                    return;
+                }
+
+                // Initialize Supabase Client
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+                console.log('✅ Supabase Client สร้างสำเร็จ');
 
                 // Check authentication
-                const { data: { session } } = await supabaseClient.auth.getSession();
+                const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
+                
+                if (sessionError) {
+                    console.error('Session error:', sessionError);
+                    showError('เกิดข้อผิดพลาดในการตรวจสอบการ Login: ' + sessionError.message);
+                    return;
+                }
+
                 if (!session) {
+                    console.log('⚠️ ไม่มี session - redirect ไปหน้า login');
                     window.location.href = 'index.html';
                     return;
                 }
+
+                console.log('✅ Login สำเร็จ:', session.user.email);
 
                 // Load data
                 await loadUtilityPrices();
@@ -596,73 +638,86 @@
                 // Hide loading, show main content
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('mainContent').style.display = 'block';
+                console.log('✅ Dashboard แสดงผลสำเร็จ');
 
             } catch (error) {
+                console.error(' Init error:', error);
                 showError('เกิดข้อผิดพลาด: ' + error.message);
-                console.error(error);
             }
         }
 
         // Load utility prices from database
         async function loadUtilityPrices() {
-            const { data, error } = await supabase
-                .from('utility_prices')
-                .select('*')
-                .order('id', { ascending: false })
-                .limit(1);
+            try {
+                const { data, error } = await supabaseClient
+                    .from('utility_prices')
+                    .select('*')
+                    .order('id', { ascending: false })
+                    .limit(1);
 
-            if (error) {
-                console.error('Error loading utility prices:', error);
-                return;
-            }
+                if (error) {
+                    console.error('Error loading utility prices:', error);
+                    return;
+                }
 
-            if (data && data.length > 0) {
-                utilityPrices = {
-                    water: data[0].water_price || 0,
-                    elec: data[0].elec_price || 0,
-                    internet: data[0].internet_price || 0
-                };
+                if (data && data.length > 0) {
+                    utilityPrices = {
+                        water: data[0].water_price || 0,
+                        elec: data[0].elec_price || 0,
+                        internet: data[0].internet_price || 0
+                    };
+                    console.log('✅ โหลดราคาสาธารณูปโภคสำเร็จ:', utilityPrices);
+                }
+            } catch (err) {
+                console.error('Error in loadUtilityPrices:', err);
             }
         }
 
         // Load rooms data
         async function loadRoomsData() {
-            const { data, error } = await supabase
-                .from('rooms_data')
-                .select('*')
-                .order('room_number');
+            try {
+                const { data, error } = await supabaseClient
+                    .from('rooms_data')
+                    .select('*')
+                    .order('room_number');
 
-            if (error) {
-                console.error('Error loading rooms data:', error);
-                return;
-            }
-
-            roomsData = data || [];
-
-            // Create empty rooms for rooms that don't exist in database
-            const totalRooms = parseInt(localStorage.getItem('TOTAL_ROOMS') || '10');
-            for (let i = 1; i <= totalRooms; i++) {
-                const roomNum = i.toString();
-                if (!roomsData.find(r => r.room_number === roomNum)) {
-                    roomsData.push({
-                        room_number: roomNum,
-                        tenant_name: '',
-                        phone: '',
-                        deposit: 0,
-                        base_rent: 0,
-                        current_rent: 0,
-                        last_water_meter: 0,
-                        last_elec_meter: 0,
-                        is_occupied: false,
-                        payment_status: 'paid',
-                        total_amount: 0,
-                        penalty: 0
-                    });
+                if (error) {
+                    console.error('Error loading rooms data:', error);
+                    showError('ไม่สามารถโหลดข้อมูลห้องได้: ' + error.message);
+                    return;
                 }
-            }
 
-            // Sort by room number
-            roomsData.sort((a, b) => parseInt(a.room_number) - parseInt(b.room_number));
+                roomsData = data || [];
+                console.log('✅ โหลดข้อมูลห้องสำเร็จ:', roomsData.length, 'ห้อง');
+
+                // Create empty rooms for rooms that don't exist in database
+                const totalRooms = parseInt(localStorage.getItem('TOTAL_ROOMS') || '10');
+                for (let i = 1; i <= totalRooms; i++) {
+                    const roomNum = i.toString();
+                    if (!roomsData.find(r => r.room_number === roomNum)) {
+                        roomsData.push({
+                            room_number: roomNum,
+                            tenant_name: '',
+                            phone: '',
+                            deposit: 0,
+                            base_rent: 0,
+                            current_rent: 0,
+                            last_water_meter: 0,
+                            last_elec_meter: 0,
+                            is_occupied: false,
+                            payment_status: 'paid',
+                            total_amount: 0,
+                            penalty: 0
+                        });
+                    }
+                }
+
+                // Sort by room number
+                roomsData.sort((a, b) => parseInt(a.room_number) - parseInt(b.room_number));
+
+            } catch (err) {
+                console.error('Error in loadRoomsData:', err);
+            }
         }
 
         // Render dashboard
@@ -717,7 +772,7 @@
                         <div class="room-details">
                             ${room.phone ? `📞 ${room.phone}<br>` : ''}
                             ${room.base_rent > 0 ? `💰 ค่าเช่า: ${room.base_rent.toLocaleString()} บาท<br>` : ''}
-                            ${room.total_amount > 0 ? `💳 ยอดรวม: ${room.total_amount.toLocaleString()} บาท` : ''}
+                            ${room.total_amount > 0 ? ` ยอดรวม: ${room.total_amount.toLocaleString()} บาท` : ''}
                         </div>
                         ${statusBadge}
                     </div>
@@ -783,7 +838,7 @@
 
                 if (existingRoom) {
                     // Update existing room
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('rooms_data')
                         .update(roomData)
                         .eq('id', existingRoom.id);
@@ -791,7 +846,7 @@
                     if (error) throw error;
                 } else {
                     // Insert new room
-                    const { error } = await supabase
+                    const { error } = await supabaseClient
                         .from('rooms_data')
                         .insert([roomData]);
 
@@ -820,8 +875,7 @@
         // Sync to room_records (update latest record)
         async function syncToRoomRecords(roomData) {
             try {
-                // Find the latest record for this room
-                const { data: latestRecord, error: fetchError } = await supabase
+                const { data: latestRecord, error: fetchError } = await supabaseClient
                     .from('room_records')
                     .select('*')
                     .eq('room', roomData.room_number)
@@ -834,7 +888,6 @@
                 }
 
                 if (latestRecord && latestRecord.length > 0) {
-                    // Update the latest record
                     const updateData = {
                         rent: roomData.current_rent,
                         water_after: roomData.last_water_meter,
@@ -842,7 +895,7 @@
                         grand_total: roomData.total_amount
                     };
 
-                    const { error: updateError } = await supabase
+                    const { error: updateError } = await supabaseClient
                         .from('room_records')
                         .update(updateData)
                         .eq('id', latestRecord[0].id);
@@ -875,7 +928,7 @@
 
             const saveBtn = document.getElementById('savePricesBtn');
             saveBtn.disabled = true;
-            saveBtn.textContent = '⏳ กำลังบันทึก...';
+            saveBtn.textContent = ' กำลังบันทึก...';
 
             try {
                 const pricesData = {
@@ -885,14 +938,12 @@
                     updated_at: new Date().toISOString()
                 };
 
-                // Insert new record (we always keep the latest one)
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('utility_prices')
                     .insert([pricesData]);
 
                 if (error) throw error;
 
-                // Reload prices
                 await loadUtilityPrices();
                 renderDashboard();
                 closePricesModal();
@@ -920,3 +971,5 @@
     </script>
 </body>
 </html>
+
+
