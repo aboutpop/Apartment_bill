@@ -572,10 +572,11 @@
                 const supabaseUrl = localStorage.getItem('SUPABASE_URL');
                 const supabaseAnonKey = localStorage.getItem('SUPABASE_ANON_KEY');
 
-                if (!supabaseUrl || !supabaseAnonKey) {
-                    showError('กรุณาตั้งค่า Supabase URL และ Anon Key ก่อน');
-                    return;
-                }
+               if (!supabaseUrl || !supabaseAnonKey) {
+    // Redirect ไปหน้าตั้งค่า
+    window.location.href = 'index.html';
+    return;
+}
 
                 // Initialize Supabase
                 supabase = window.supabaseClient.createClient(supabaseUrl, supabaseAnonKey);
