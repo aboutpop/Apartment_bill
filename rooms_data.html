@@ -560,7 +560,7 @@
 
     <script>
         // Global variables
-        let supabase;
+        let supabaseClient;
         let roomsData = [];
         let utilityPrices = { water: 0, elec: 0, internet: 0 };
         let currentRoomNumber = null;
@@ -578,10 +578,10 @@
                 }
 
                 // Initialize Supabase
-                supabase = window.supabase.createClient(supabaseUrl, supabaseAnonKey);
+                supabase = window.supabaseClient.createClient(supabaseUrl, supabaseAnonKey);
 
                 // Check authentication
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { session } } = await supabaseClient.auth.getSession();
                 if (!session) {
                     window.location.href = 'index.html';
                     return;
