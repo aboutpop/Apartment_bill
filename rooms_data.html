@@ -360,6 +360,13 @@
         .btn-modal-save:hover { background: var(--blue-dark); }
         .modal-msg { font-size: 13px; font-weight: 600; color: var(--green); margin-right: auto; padding-left: 4px; min-height: 20px; }
 
+        /* ─── ซ่อนปุ่มขึ้น-ลงในช่องตัวเลขทุกช่อง ─── */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
+        /* occupied toggle สีน้ำเงิน */
+        .toggle-switch.occupied-toggle input:checked + .toggle-slider { background: var(--blue-main); }
+
         /* ─── Toggle Switch ─── */
         .toggle-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
         .toggle-label { font-size: 14px; color: var(--text-mid); }
@@ -580,9 +587,16 @@
                     <label>ค่าปรับ (บาท)</label>
                     <input type="number" id="mFine" placeholder="0">
                 </div>
-                <div class="modal-field" style="display:flex; align-items:flex-end; padding-bottom:2px;">
-                    <div>
-                        <label>สถานะการจ่ายเงินเดือนล่าสุด</label>
+                <div class="modal-field full">
+                    <label>สถานะห้อง &amp; การจ่ายเงิน</label>
+                    <div style="display:flex; gap:24px; flex-wrap:wrap; padding-top:6px;">
+                        <div class="toggle-row">
+                            <label class="toggle-switch occupied-toggle">
+                                <input type="checkbox" id="mOccupied">
+                                <span class="toggle-slider"></span>
+                            </label>
+                            <span class="toggle-label" id="mOccupiedLabel">ห้องว่าง</span>
+                        </div>
                         <div class="toggle-row">
                             <label class="toggle-switch">
                                 <input type="checkbox" id="mPaidStatus">
@@ -594,23 +608,23 @@
                 </div>
             </div>
 
-            <div class="modal-section-title">ข้อมูลบิลเดือนล่าสุด (อ่านอย่างเดียว)</div>
+            <div class="modal-section-title">ข้อมูลบิลเดือนล่าสุด (แก้มิเตอร์ได้)</div>
             <div class="modal-field-grid">
                 <div class="modal-field">
                     <label>ค่าห้องรวมเดือนล่าสุด (บาท)</label>
-                    <input type="number" id="mLastTotal" readonly>
+                    <input type="number" id="mLastTotal" readonly style="background:var(--gray-light);color:var(--text-soft);">
                 </div>
                 <div class="modal-field">
                     <label>วันที่ออกบิลล่าสุด</label>
-                    <input type="text" id="mLastMonth" readonly>
+                    <input type="text" id="mLastMonth" readonly style="background:var(--gray-light);color:var(--text-soft);">
                 </div>
                 <div class="modal-field">
-                    <label>เลขมิเตอร์น้ำล่าสุด</label>
-                    <input type="number" id="mLastWater" readonly>
+                    <label>เลขมิเตอร์น้ำล่าสุด ✏️</label>
+                    <input type="number" id="mLastWater" placeholder="0">
                 </div>
                 <div class="modal-field">
-                    <label>เลขมิเตอร์ไฟล่าสุด</label>
-                    <input type="number" id="mLastElec" readonly>
+                    <label>เลขมิเตอร์ไฟล่าสุด ✏️</label>
+                    <input type="number" id="mLastElec" placeholder="0">
                 </div>
             </div>
 
@@ -645,6 +659,9 @@
         checkSession();
         document.getElementById('mPaidStatus').addEventListener('change', function () {
             document.getElementById('mPaidLabel').textContent = this.checked ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
+        });
+        document.getElementById('mOccupied').addEventListener('change', function () {
+            document.getElementById('mOccupiedLabel').textContent = this.checked ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
         });
     });
 
@@ -912,10 +929,13 @@
         document.getElementById('mLastWater').value      = room.last_water   ?? '';
         document.getElementById('mLastElec').value       = room.last_elec    ?? '';
 
-        const paid = !!room.paid_status;
-        document.getElementById('mPaidStatus').checked   = paid;
-        document.getElementById('mPaidLabel').textContent = paid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
-        document.getElementById('modalMsg').textContent  = '';
+        const paid     = !!room.paid_status;
+        const occupied = !!(room.tenant_name && room.tenant_name.trim() !== '');
+        document.getElementById('mPaidStatus').checked    = paid;
+        document.getElementById('mPaidLabel').textContent  = paid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
+        document.getElementById('mOccupied').checked      = occupied;
+        document.getElementById('mOccupiedLabel').textContent = occupied ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
+        document.getElementById('modalMsg').textContent   = '';
 
         document.getElementById('roomModal').style.display = 'flex';
     };
@@ -934,13 +954,16 @@
         const msgEl = document.getElementById('modalMsg');
         msgEl.textContent = '';
 
+        const isOccupied = document.getElementById('mOccupied').checked;
         const payload = {
-            tenant_name: document.getElementById('mTenant').value.trim(),
-            phone:       document.getElementById('mPhone').value.trim(),
+            tenant_name: isOccupied ? document.getElementById('mTenant').value.trim() : '',
+            phone:       isOccupied ? document.getElementById('mPhone').value.trim() : '',
             deposit:     parseFloat(document.getElementById('mDeposit').value) || 0,
             base_rent:   parseFloat(document.getElementById('mBaseRent').value) || 0,
             fine:        parseFloat(document.getElementById('mFine').value) || 0,
             paid_status: document.getElementById('mPaidStatus').checked,
+            last_water:  parseFloat(document.getElementById('mLastWater').value) || 0,
+            last_elec:   parseFloat(document.getElementById('mLastElec').value) || 0,
         };
 
         try {
