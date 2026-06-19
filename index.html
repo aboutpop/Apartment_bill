@@ -99,6 +99,11 @@
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-success:hover:not(:disabled) { background-color: #2c974b; }
 
+        .tab-btn.tab-btn-dashboard {
+            background: #1a3a6b; color: white; text-decoration: none;
+            display: inline-flex; align-items: center;
+        }
+        .tab-btn.tab-btn-dashboard:hover { background: #0f2548; }
         /* ─── Config Tab ─── */
         .config-group { margin-bottom: 15px; }
         .config-group label { display: block; font-weight: bold; margin-bottom: 5px; }
@@ -243,7 +248,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('invoice-tab', this)">📝 ออกบิลค่าเช่า</button>
             <button class="tab-btn" onclick="switchTab('history-tab', this)">📊 ประวัติข้อมูลรายห้อง</button>
-            <button class="tab-btn" onclick="switchTab('config-tab', this)">⚙️ ตั้งค่าระบบ & ฐานข้อมูล</button>
+            <a href="rooms_data.html" class="tab-btn tab-btn-dashboard" target="_blank">🏠 Dashboard จัดการห้อง</a>
         </div>
 
         <!-- แท็บออกบิล -->
@@ -389,53 +394,14 @@
             </div>
         </div>
 
-        <!-- แท็บตั้งค่า -->
-        <div id="config-tab" class="tab-content">
-            <h3>⚙️ ตั้งค่าการเชื่อมต่อฐานข้อมูล Supabase</h3>
-            <div class="settings-note">
-                📌 ค่าทั้งหมดในหน้านี้ถูกบันทึกไว้ใน <strong>เบราว์เซอร์นี้เท่านั้น</strong> (localStorage)
-            </div>
-            <div class="config-group">
-                <label>Supabase URL:</label>
-                <input type="text" id="supabaseUrl" style="text-align:left;"
-                    placeholder="https://xyz.supabase.co" oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>Supabase Anon API Key:</label>
-                <input type="text" id="supabaseKey" style="text-align:left;"
-                    placeholder="ใส่คีย์สาธารณะ anon ของคุณ" oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>จำนวนห้องทั้งหมดในหอพัก:</label>
-                <input type="number" id="roomCountInput" min="1" max="200" value="10"
-                    style="text-align:left;" placeholder="10" oninput="saveSettings()">
-                <div style="font-size:13px; color:#777; margin-top:4px;">
-                    ปรับเพิ่ม/ลดได้ตามจำนวนห้องจริง (ค่าเริ่มต้น 10 ห้อง)
-                </div>
-            </div>
-            <div class="config-group">
-                <label>ข้อมูลบัญชีธนาคาร (แสดงท้ายบิล):</label>
-                <input type="text" id="bankInfoInput" style="text-align:left;"
-                    value="ธนาคารกสิกรไทย เลขที่บัญชี 123-4-56789-0 ชื่อบัญชี สมชาย ใจดี"
-                    oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>ลิงก์รูปภาพโลโก้หอพัก (Direct URL):</label>
-                <input type="text" id="logoUrlInput" style="text-align:left;"
-                    placeholder="ใส่ลิงก์รูปภาพโลโก้ของคุณที่นี่" oninput="saveSettings()">
-            </div>
-            <div class="config-group">
-                <label>ลิงก์รูปภาพ QR Code (Direct URL):</label>
-                <input type="text" id="qrUrlInput" style="text-align:left;"
-                    placeholder="ใส่ลิงก์รูปภาพ QR Code" oninput="saveSettings()">
-            </div>
-            <hr style="border:none; border-top:1px solid #ddd; margin:20px 0;">
-            <div class="config-group">
-                <label style="color:#d32f2f;">โซนอันตราย</label>
-                <button class="btn-danger-outline" onclick="clearAllSettings()">
-                    🗑️ ล้างการตั้งค่าทั้งหมดในเบราว์เซอร์นี้ (ออกจากระบบด้วย)
-                </button>
-            </div>
+        <!-- hidden inputs ที่ยังต้องใช้ใน JS แต่ไม่แสดงผล -->
+        <div style="display:none;">
+            <input type="text" id="supabaseUrl">
+            <input type="text" id="supabaseKey">
+            <input type="number" id="roomCountInput" value="10">
+            <input type="text" id="bankInfoInput">
+            <input type="text" id="logoUrlInput">
+            <input type="text" id="qrUrlInput">
         </div>
 
     </div>
@@ -652,6 +618,8 @@
     }
 
     // ─── Settings ─────────────────────────────────────────────────────
+    // Tab ตั้งค่าถูกย้ายไป rooms_data.html แล้ว
+    // ฟังก์ชันนี้ยังคงไว้เผื่อ backward compat แต่ไม่ถูกเรียกจาก UI แล้ว
     window.saveSettings = function () {
         store.set('supabaseUrl', document.getElementById('supabaseUrl').value);
         store.set('supabaseKey', document.getElementById('supabaseKey').value);
@@ -660,7 +628,7 @@
         store.set('qrUrl',       document.getElementById('qrUrlInput').value);
         store.set('roomCount',   document.getElementById('roomCountInput').value);
         applyRoomCount();
-        initSupabase(); // สร้าง client ใหม่เมื่อตั้งค่าเปลี่ยน
+        initSupabase();
         updateDisplayFromSettings();
     };
 
@@ -728,14 +696,16 @@
             supabaseClient = null;
         }
 
-        ['supabaseUrl', 'supabaseKey', 'bankInfo', 'logoUrl', 'qrUrl', 'roomCount'].forEach(k => store.remove(k));
+        ['supabaseUrl', 'supabaseKey', 'bankInfo', 'logoUrl', 'qrUrl', 'roomCount',
+         'waterRate', 'elecRate'].forEach(k => store.remove(k));
 
-        // Reset ทุก input
-        ['supabaseUrl', 'supabaseKey'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('bankInfoInput').value = '';
-        document.getElementById('logoUrlInput').value  = '';
-        document.getElementById('qrUrlInput').value    = '';
-        document.getElementById('roomCountInput').value = 10;
+        // Reset hidden inputs
+        ['supabaseUrl', 'supabaseKey', 'bankInfoInput', 'logoUrlInput', 'qrUrlInput'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        const rc = document.getElementById('roomCountInput');
+        if (rc) rc.value = 10;
         document.getElementById('preSupabaseUrl').value = '';
         document.getElementById('preSupabaseKey').value = '';
         document.getElementById('preRoomCount').value   = 10;
