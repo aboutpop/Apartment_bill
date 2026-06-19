@@ -602,7 +602,7 @@
         if (userEmail) {
             document.getElementById('userEmailDisplay').textContent = '👤 ' + userEmail;
         }
-        autoFetchLastMeter();
+        syncRoomCountFromDB().then(() => autoFetchLastMeter());
     }
 
     function hideApp() {
@@ -724,8 +724,8 @@
     };
 
     // ─── Room Count ───────────────────────────────────────────────────
-    function applyRoomCount() {
-        let count = parseInt(document.getElementById('roomCountInput').value) || 10;
+    function applyRoomCount(overrideCount) {
+        let count = overrideCount || parseInt(document.getElementById('roomCountInput').value) || 10;
         count = Math.min(Math.max(count, 1), 200);
         document.getElementById('roomCountInput').value = count;
 
@@ -741,6 +741,25 @@
 
         if (prevRoom    && parseInt(prevRoom)    <= count) roomNoSel.value  = prevRoom;
         if (prevHistory && parseInt(prevHistory) <= count) historySel.value = prevHistory;
+    }
+
+    // ดึงจำนวนห้องจริงจาก rooms_data (แก้ปัญหาเปิดเบราว์เซอร์ใหม่ได้จำนวนห้องไม่ถูก)
+    async function syncRoomCountFromDB() {
+        if (!supabaseClient) return;
+        try {
+            const { data, error } = await supabaseClient
+                .from('rooms_data')
+                .select('room_number')
+                .order('room_number', { ascending: false })
+                .limit(1);
+            if (!error && data && data.length > 0) {
+                const maxRoom = data[0].room_number;
+                store.set('roomCount', maxRoom);
+                applyRoomCount(maxRoom);
+            }
+        } catch (e) {
+            console.warn('syncRoomCount skipped:', e.message);
+        }
     }
 
     // ─── Display From Settings ────────────────────────────────────────
@@ -800,30 +819,52 @@
         return `${d}/${m}/${y}`;
     }
 
-    // ─── Auto Fetch Last Meter ────────────────────────────────────────
+    // ─── Auto Fetch: ดึงค่าเช่า + มิเตอร์ + อัตราน้ำ-ไฟ ────────────────
     window.autoFetchLastMeter = async function () {
         if (!supabaseClient) return;
         const room = document.getElementById('roomNo').value;
 
+        // ดึงอัตราน้ำ-ไฟจาก localStorage (ตั้งค่าใน Dashboard) เสมอ
+        const waterRate = parseFloat(store.get('waterRate')) || 30;
+        const elecRate  = parseFloat(store.get('elecRate'))  || 6;
+        document.getElementById('waterRate').value = waterRate;
+        document.getElementById('elecRate').value  = elecRate;
+
         try {
-            const { data, error } = await supabaseClient
-                .from('room_records')
-                .select('water_after, elec_after')
-                .eq('room', room)
-                .order('id', { ascending: false })
+            // ดึงข้อมูล master ห้อง: ค่าเช่าเริ่มต้น + เลขมิเตอร์ล่าสุด
+            const { data: rd, error: rdErr } = await supabaseClient
+                .from('rooms_data')
+                .select('base_rent, last_water, last_elec')
+                .eq('room_number', room)
                 .limit(1);
 
-            if (error) throw error;
-
-            if (data && data.length > 0) {
-                document.getElementById('waterBefore').value = data[0].water_after ?? 0;
-                document.getElementById('elecBefore').value  = data[0].elec_after  ?? 0;
+            if (!rdErr && rd && rd.length > 0) {
+                if (rd[0].base_rent != null) {
+                    document.getElementById('rentAmount').value = rd[0].base_rent;
+                }
+                document.getElementById('waterBefore').value = rd[0].last_water ?? 0;
+                document.getElementById('elecBefore').value  = rd[0].last_elec  ?? 0;
             } else {
-                document.getElementById('waterBefore').value = 0;
-                document.getElementById('elecBefore').value  = 0;
+                // fallback: ถ้ายังไม่มีตาราง rooms_data ให้ดึงจาก room_records แบบเดิม
+                const { data, error } = await supabaseClient
+                    .from('room_records')
+                    .select('water_after, elec_after')
+                    .eq('room', room)
+                    .order('id', { ascending: false })
+                    .limit(1);
+
+                if (!error && data && data.length > 0) {
+                    document.getElementById('waterBefore').value = data[0].water_after ?? 0;
+                    document.getElementById('elecBefore').value  = data[0].elec_after  ?? 0;
+                } else {
+                    document.getElementById('waterBefore').value = 0;
+                    document.getElementById('elecBefore').value  = 0;
+                }
             }
         } catch (e) {
             console.warn('autoFetchLastMeter error:', e.message);
+            document.getElementById('waterBefore').value = 0;
+            document.getElementById('elecBefore').value  = 0;
         }
 
         document.getElementById('waterAfter').value = 0;
@@ -860,6 +901,10 @@
 
             btn.innerText = '⏳ กำลังบันทึก...';
 
+            const waterAfter = parseFloat(document.getElementById('waterAfter').value) || 0;
+            const elecAfter  = parseFloat(document.getElementById('elecAfter').value)  || 0;
+            const grandTotal = parseFloat(document.getElementById('grandTotal').innerText) || 0;
+
             const payload = {
                 month:        formattedDate,
                 room:         roomNo,
@@ -867,18 +912,37 @@
                 water_before: parseFloat(document.getElementById('waterBefore').value)    || 0,
                 water_unit:   parseFloat(document.getElementById('waterUnit').innerText)  || 0,
                 water_total:  parseFloat(document.getElementById('waterTotal').innerText) || 0,
-                water_after:  parseFloat(document.getElementById('waterAfter').value)     || 0,
+                water_after:  waterAfter,
                 elec_before:  parseFloat(document.getElementById('elecBefore').value)     || 0,
                 elec_unit:    parseFloat(document.getElementById('elecUnit').innerText)   || 0,
                 elec_total:   parseFloat(document.getElementById('elecTotal').innerText)  || 0,
-                elec_after:   parseFloat(document.getElementById('elecAfter').value)      || 0,
+                elec_after:   elecAfter,
                 internet:     parseFloat(document.getElementById('internetAmount').value) || 0,
                 discount:     parseFloat(document.getElementById('discountAmount').value) || 0,
-                grand_total:  parseFloat(document.getElementById('grandTotal').innerText) || 0
+                grand_total:  grandTotal
             };
 
+            // บันทึกบิลลง room_records
             const { error } = await supabaseClient.from('room_records').insert([payload]);
             if (error) throw error;
+
+            // อัปเดต rooms_data: เลขมิเตอร์ล่าสุด + ยอดบิลล่าสุด (เฉพาะ record ล่าสุดเท่านั้น)
+            try {
+                await supabaseClient
+                    .from('rooms_data')
+                    .update({
+                        last_water: waterAfter,
+                        last_elec:  elecAfter,
+                        last_total: grandTotal,
+                        last_month: formattedDate,
+                        paid_status: false   // รีเซ็ตสถานะ "ยังไม่จ่าย" เมื่อออกบิลใหม่
+                    })
+                    .eq('room_number', parseInt(roomNo));
+            } catch (dashErr) {
+                // ถ้า rooms_data ยังไม่มี ข้ามไปได้ ไม่ error ใหญ่
+                console.warn('rooms_data update skipped:', dashErr.message);
+            }
+
             alert(`✅ บันทึกข้อมูลห้อง ${roomNo} วันที่ ${formattedDate} สำเร็จ!`);
 
         } catch (e) {
