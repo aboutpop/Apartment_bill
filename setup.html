@@ -6,173 +6,181 @@
 <title>คู่มือติดตั้ง Supabase — ระบบห้องเช่า</title>
 
 <!-- Shared Styles -->
-<link rel="stylesheet" href="shared-style.html">
+<link rel="stylesheet" href="shared-style.css">
 
 <!-- Supabase JS สำหรับขั้นตอนตรวจสอบ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-    /* ===== Styles เฉพาะสำหรับ setup.html ===== */
+    /* ============================================================
+       Styles เฉพาะสำหรับ setup.html เท่านั้น
+       (ใช้ตัวแปรและ class จาก shared-style.css เป็นหลัก)
+       ============================================================ */
 
-    /* Verification Step */
-    .verify-box {
-        background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
-        border: 2px solid #0ea5e9;
-        border-radius: 12px;
-        padding: 24px;
-        margin: 20px 0;
+    .container {
+        max-width: 1000px;
     }
 
-    .verify-box h3 {
-        color: #0369a1;
-        margin-top: 0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .verify-input-group {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 16px;
-    }
-
-    .verify-input-group label {
-        display: block;
-        font-weight: 600;
-        color: #334155;
-        margin-bottom: 6px;
-        font-size: 0.9rem;
-    }
-
-    .verify-input-group input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 2px solid #cbd5e1;
-        border-radius: 8px;
-        font-size: 0.95rem;
-        font-family: 'Courier New', monospace;
-        transition: border-color 0.2s;
-        box-sizing: border-box;
-    }
-
-    .verify-input-group input:focus {
-        outline: none;
-        border-color: #0ea5e9;
-    }
-
-    .verify-btn {
-        background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
-        color: white;
-        border: none;
-        padding: 12px 28px;
-        border-radius: 8px;
-        font-size: 1rem;
-        font-weight: 600;
-        cursor: pointer;
-        width: 100%;
-        transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .verify-btn:hover:not(:disabled) {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
-    }
-
-    .verify-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    .verify-results {
-        margin-top: 20px;
-        display: none;
-    }
-
-    .verify-results.show {
-        display: block;
-        animation: fadeIn 0.4s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .verify-item {
-        display: flex;
-        align-items: center;
-        padding: 12px 16px;
+    h1 {
+        color: var(--primary-color);
+        border-bottom: 3px solid var(--primary-color);
+        padding-bottom: 12px;
         margin-bottom: 8px;
-        background: white;
-        border-radius: 8px;
-        border-left: 4px solid #cbd5e1;
-        transition: all 0.3s;
     }
 
-    .verify-item.success {
-        border-left-color: #10b981;
-        background: #f0fdf4;
+    h2 {
+        color: var(--primary-color);
+        margin-top: 40px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid var(--border-color);
     }
 
-    .verify-item.error {
-        border-left-color: #ef4444;
-        background: #fef2f2;
+    h3 {
+        color: var(--primary-hover);
+        margin-top: 24px;
     }
 
-    .verify-item.checking {
-        border-left-color: #f59e0b;
-        background: #fffbeb;
+    .subtitle {
+        color: #666;
+        font-size: 1.05rem;
+        margin-bottom: 20px;
     }
 
-    .verify-icon {
-        font-size: 1.5rem;
-        margin-right: 12px;
-        min-width: 30px;
-        text-align: center;
-    }
-
-    .verify-text {
-        flex: 1;
-    }
-
-    .verify-text strong {
-        display: block;
-        color: #1e293b;
-        margin-bottom: 2px;
-    }
-
-    .verify-text small {
-        color: #64748b;
-        font-size: 0.85rem;
-    }
-
-    .verify-summary {
-        margin-top: 16px;
-        padding: 16px;
-        border-radius: 8px;
+    .back-link {
+        display: inline-block;
+        margin-bottom: 16px;
+        color: var(--primary-color);
+        text-decoration: none;
         font-weight: 600;
-        text-align: center;
-        display: none;
     }
 
-    .verify-summary.show {
-        display: block;
-        animation: fadeIn 0.4s ease-out;
+    .back-link:hover {
+        color: var(--primary-hover);
+        text-decoration: underline;
     }
 
-    .verify-summary.success {
-        background: #10b981;
+    a {
+        color: var(--primary-color);
+    }
+
+    a:hover {
+        color: var(--primary-hover);
+    }
+
+    code {
+        background: #eef2f7;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-family: 'Courier New', monospace;
+        color: #be185d;
+        font-size: 0.9em;
+    }
+
+    /* ===== สารบัญ (TOC) ===== */
+    .toc {
+        background: var(--card-bg);
+        padding: 20px 25px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+        margin: 20px 0;
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .toc h3 {
+        margin-top: 0;
+        color: var(--primary-color);
+    }
+
+    .toc ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        columns: 2;
+        column-gap: 30px;
+    }
+
+    .toc li {
+        padding: 4px 0;
+        break-inside: avoid;
+    }
+
+    .toc a {
+        text-decoration: none;
+        color: var(--text-color);
+        font-weight: 500;
+    }
+
+    .toc a:hover {
+        color: var(--primary-color);
+    }
+
+    /* ===== Step Navigation Pills ===== */
+    .step-nav-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 20px 0;
+        padding: 12px;
+        background: var(--card-bg);
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .step-nav-pills a {
+        padding: 6px 14px;
+        background: #eef2f7;
+        color: var(--primary-color);
+        border-radius: 20px;
+        text-decoration: none;
+        font-size: 0.88rem;
+        font-weight: 600;
+        transition: all 0.2s;
+        border: 1px solid transparent;
+    }
+
+    .step-nav-pills a:hover {
+        background: var(--primary-color);
         color: white;
     }
 
-    .verify-summary.error {
-        background: #ef4444;
-        color: white;
+    /* ===== กล่องข้อความต่างๆ ===== */
+    .info-box, .warning-box, .danger-box, .success-box {
+        padding: 14px 18px;
+        border-radius: 6px;
+        margin: 14px 0;
+        border-left: 4px solid;
     }
 
-    /* SQL Code Block */
+    .info-box {
+        background: #eef4fc;
+        border-color: var(--primary-color);
+        color: #1e3d6b;
+    }
+
+    .warning-box {
+        background: #fff8e1;
+        border-color: #f59e0b;
+        color: #78350f;
+    }
+
+    .danger-box {
+        background: #fef2f2;
+        border-color: #dc2626;
+        color: #7f1d1d;
+    }
+
+    .success-box {
+        background: #ecfdf5;
+        border-color: var(--success-color);
+        color: #065f46;
+    }
+
+    .info-box ul, .warning-box ul, .danger-box ul, .success-box ul {
+        margin: 8px 0 0 0;
+        padding-left: 20px;
+    }
+
+    /* ===== SQL Code Block ===== */
     .sql-block {
         position: relative;
         background: #1e293b;
@@ -210,10 +218,10 @@
     }
 
     .copy-btn.copied {
-        background: #10b981;
+        background: var(--success-color);
     }
 
-    /* Table Comparison */
+    /* ===== ตารางเปรียบเทียบ 2 ตาราง ===== */
     .table-compare {
         display: grid;
         grid-template-columns: 1fr 1fr;
@@ -222,71 +230,203 @@
     }
 
     .table-card {
-        background: white;
-        border: 2px solid #e2e8f0;
-        border-radius: 12px;
-        padding: 16px;
+        background: var(--card-bg);
+        border: 2px solid var(--border-color);
+        border-top: 4px solid var(--primary-color);
+        border-radius: 8px;
+        padding: 18px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     }
 
     .table-card h4 {
         margin-top: 0;
-        color: #0369a1;
-        border-bottom: 2px solid #e0f2fe;
+        color: var(--primary-color);
+        border-bottom: 2px solid #eef2f7;
         padding-bottom: 8px;
     }
 
     .table-card code {
         display: block;
-        background: #f1f5f9;
-        padding: 8px;
+        background: #f4f6f9;
+        padding: 10px;
         border-radius: 6px;
-        font-size: 0.85rem;
-        margin: 8px 0;
-        color: #be185d;
+        font-size: 0.82rem;
+        margin: 10px 0;
+        color: var(--primary-hover);
+        line-height: 1.6;
     }
 
+    /* ===== Verification Box (ขั้นตอน 8) ===== */
+    .verify-box {
+        background: linear-gradient(135deg, #eef4fc 0%, #dde8f5 100%);
+        border: 2px solid var(--primary-color);
+        border-radius: 10px;
+        padding: 24px;
+        margin: 20px 0;
+    }
+
+    .verify-box h3 {
+        color: var(--primary-color);
+        margin-top: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .verify-input-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-bottom: 16px;
+    }
+
+    .verify-input-group label {
+        display: block;
+        font-weight: 600;
+        color: var(--text-color);
+        margin-bottom: 6px;
+        font-size: 0.9rem;
+    }
+
+    .verify-input-group input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #bbb;
+        border-radius: 4px;
+        font-size: 0.95rem;
+        font-family: 'Courier New', monospace;
+        box-sizing: border-box;
+    }
+
+    .verify-input-group input:focus {
+        outline: 2px solid var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .verify-btn {
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        padding: 12px 28px;
+        border-radius: 4px;
+        font-size: 1rem;
+        font-weight: bold;
+        cursor: pointer;
+        width: 100%;
+        transition: background 0.2s;
+    }
+
+    .verify-btn:hover:not(:disabled) {
+        background-color: var(--primary-hover);
+    }
+
+    .verify-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    .verify-results {
+        margin-top: 20px;
+        display: none;
+    }
+
+    .verify-results.show {
+        display: block;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .verify-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        margin-bottom: 8px;
+        background: white;
+        border-radius: 6px;
+        border-left: 4px solid var(--border-color);
+        transition: all 0.3s;
+    }
+
+    .verify-item.success {
+        border-left-color: var(--success-color);
+        background: #ecfdf5;
+    }
+
+    .verify-item.error {
+        border-left-color: #dc2626;
+        background: #fef2f2;
+    }
+
+    .verify-item.checking {
+        border-left-color: #f59e0b;
+        background: #fff8e1;
+    }
+
+    .verify-icon {
+        font-size: 1.5rem;
+        margin-right: 12px;
+        min-width: 30px;
+        text-align: center;
+    }
+
+    .verify-text {
+        flex: 1;
+    }
+
+    .verify-text strong {
+        display: block;
+        color: var(--text-color);
+        margin-bottom: 2px;
+    }
+
+    .verify-text small {
+        color: #64748b;
+        font-size: 0.85rem;
+    }
+
+    .verify-summary {
+        margin-top: 16px;
+        padding: 16px;
+        border-radius: 6px;
+        font-weight: 600;
+        text-align: center;
+        display: none;
+    }
+
+    .verify-summary.show {
+        display: block;
+        animation: fadeIn 0.4s ease-out;
+    }
+
+    .verify-summary.success {
+        background: var(--success-color);
+        color: white;
+    }
+
+    .verify-summary.error {
+        background: #dc2626;
+        color: white;
+    }
+
+    /* ===== Responsive ===== */
     @media (max-width: 768px) {
+        .toc ul {
+            columns: 1;
+        }
         .verify-input-group {
             grid-template-columns: 1fr;
         }
         .table-compare {
             grid-template-columns: 1fr;
         }
-    }
-
-    /* Step Navigation Pills */
-    .step-nav-pills {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin: 20px 0;
-    }
-
-    .step-nav-pills a {
-        padding: 6px 12px;
-        background: #e0f2fe;
-        color: #0369a1;
-        border-radius: 20px;
-        text-decoration: none;
-        font-size: 0.85rem;
-        font-weight: 600;
-        transition: all 0.2s;
-    }
-
-    .step-nav-pills a:hover {
-        background: #0ea5e9;
-        color: white;
-    }
-
-    .step-nav-pills a.new-step {
-        background: #fef3c7;
-        color: #92400e;
-        animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-        0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
-        50% { box-shadow: 0 0 0 8px rgba(245, 158, 11, 0); }
+        th, td {
+            font-size: 13px;
+            padding: 6px;
+        }
     }
 </style>
 </head>
@@ -324,7 +464,7 @@
         <a href="#create-user">5️⃣ สร้าง User</a>
         <a href="#get-keys">6️⃣ ดึง Key</a>
         <a href="#fill-config">7️⃣ กรอกข้อมูล</a>
-        <a href="#verify" class="new-step">8️⃣ ✅ ตรวจสอบ</a>
+        <a href="#verify">8️⃣ ✅ ตรวจสอบ</a>
     </div>
 
     <!-- ============================================ -->
@@ -348,27 +488,27 @@
             </thead>
             <tbody>
                 <tr>
-                    <td>บัญชี Supabase</td>
+                    <td class="left">บัญชี Supabase</td>
                     <td>สมัครด้วย Email หรือ GitHub</td>
                     <td>ฟรี</td>
                 </tr>
                 <tr>
-                    <td>Supabase Project</td>
+                    <td class="left">Supabase Project</td>
                     <td>1 Project ต่อหอพัก</td>
                     <td>ฟรี</td>
                 </tr>
                 <tr>
-                    <td>ตาราง <code>room_records</code></td>
+                    <td class="left">ตาราง <code>room_records</code></td>
                     <td>เก็บประวัติบิลทั้งหมด</td>
                     <td>ฟรี</td>
                 </tr>
                 <tr>
-                    <td>ตาราง <code>rooms_data</code></td>
+                    <td class="left">ตาราง <code>rooms_data</code></td>
                     <td>เก็บข้อมูลห้องและผู้เช่า</td>
                     <td>ฟรี</td>
                 </tr>
                 <tr>
-                    <td>Supabase Auth User</td>
+                    <td class="left">Supabase Auth User</td>
                     <td>บัญชีสำหรับ Login</td>
                     <td>ฟรี</td>
                 </tr>
@@ -502,18 +642,18 @@ CREATE TABLE rooms_data (
                 </tr>
             </thead>
             <tbody>
-                <tr><td><code>id</code></td><td>bigint</td><td>รหัสอ้างอิง (Auto)</td></tr>
-                <tr><td><code>room_number</code></td><td>integer</td><td>หมายเลขห้อง (ห้ามซ้ำ)</td></tr>
-                <tr><td><code>tenant_name</code></td><td>text</td><td>ชื่อผู้เช่า</td></tr>
-                <tr><td><code>phone</code></td><td>text</td><td>เบอร์โทรศัพท์</td></tr>
-                <tr><td><code>deposit</code></td><td>real</td><td>เงินมัดจำ</td></tr>
-                <tr><td><code>base_rent</code></td><td>real</td><td>ค่าเช่าเริ่มต้น</td></tr>
-                <tr><td><code>fine</code></td><td>real</td><td>ค่าปรับ</td></tr>
-                <tr><td><code>paid_status</code></td><td>boolean</td><td>สถานะการชำระเงิน</td></tr>
-                <tr><td><code>last_total</code></td><td>real</td><td>ยอดรวมบิลล่าสุด</td></tr>
-                <tr><td><code>last_month</code></td><td>text</td><td>วันที่ออกบิลล่าสุด</td></tr>
-                <tr><td><code>last_water</code></td><td>real</td><td>เลขมิเตอร์น้ำล่าสุด</td></tr>
-                <tr><td><code>last_elec</code></td><td>real</td><td>เลขมิเตอร์ไฟล่าสุด</td></tr>
+                <tr><td class="left"><code>id</code></td><td>bigint</td><td>รหัสอ้างอิง (Auto)</td></tr>
+                <tr><td class="left"><code>room_number</code></td><td>integer</td><td>หมายเลขห้อง (ห้ามซ้ำ)</td></tr>
+                <tr><td class="left"><code>tenant_name</code></td><td>text</td><td>ชื่อผู้เช่า</td></tr>
+                <tr><td class="left"><code>phone</code></td><td>text</td><td>เบอร์โทรศัพท์</td></tr>
+                <tr><td class="left"><code>deposit</code></td><td>real</td><td>เงินมัดจำ</td></tr>
+                <tr><td class="left"><code>base_rent</code></td><td>real</td><td>ค่าเช่าเริ่มต้น</td></tr>
+                <tr><td class="left"><code>fine</code></td><td>real</td><td>ค่าปรับ</td></tr>
+                <tr><td class="left"><code>paid_status</code></td><td>boolean</td><td>สถานะการชำระเงิน</td></tr>
+                <tr><td class="left"><code>last_total</code></td><td>real</td><td>ยอดรวมบิลล่าสุด</td></tr>
+                <tr><td class="left"><code>last_month</code></td><td>text</td><td>วันที่ออกบิลล่าสุด</td></tr>
+                <tr><td class="left"><code>last_water</code></td><td>real</td><td>เลขมิเตอร์น้ำล่าสุด</td></tr>
+                <tr><td class="left"><code>last_elec</code></td><td>real</td><td>เลขมิเตอร์ไฟล่าสุด</td></tr>
             </tbody>
         </table>
     </section>
@@ -645,7 +785,7 @@ USING (auth.role() = 'authenticated');</pre>
     </section>
 
     <!-- ============================================ -->
-    <!-- ขั้นตอนที่ 8: ตรวจสอบความถูกต้อง -->
+    <!-- ขั้นตอนที่ 8: ตรวจสอบความถูกต้อง (ไม่รวม RLS) -->
     <!-- ============================================ -->
     <section id="verify">
         <h2>8️⃣ ✅ ตรวจสอบความถูกต้อง</h2>
@@ -682,7 +822,7 @@ USING (auth.role() = 'authenticated');</pre>
             </button>
 
             <div class="verify-results" id="verifyResults">
-                <h4 style="margin-top: 20px; color: #0369a1;">📊 ผลการตรวจสอบ:</h4>
+                <h4 style="margin-top: 20px; color: var(--primary-color);">📊 ผลการตรวจสอบ:</h4>
                 <div id="verifyItems"></div>
                 <div class="verify-summary" id="verifySummary"></div>
             </div>
@@ -703,32 +843,27 @@ USING (auth.role() = 'authenticated');</pre>
             </thead>
             <tbody>
                 <tr>
-                    <td>📡 การเชื่อมต่อ Supabase</td>
+                    <td class="left">📡 การเชื่อมต่อ Supabase</td>
                     <td>URL และ Key ถูกต้อง</td>
                     <td>กลับไปทำขั้นตอนที่ 6 ใหม่</td>
                 </tr>
                 <tr>
-                    <td>📋 ตาราง room_records</td>
+                    <td class="left">📋 ตาราง room_records</td>
                     <td>มีตารางนี้อยู่ในฐานข้อมูล</td>
                     <td>กลับไปรัน SQL ในขั้นตอนที่ 3 ส่วนที่ 1</td>
                 </tr>
                 <tr>
-                    <td>🏠 ตาราง rooms_data</td>
+                    <td class="left">🏠 ตาราง rooms_data</td>
                     <td>มีตารางนี้อยู่ในฐานข้อมูล</td>
                     <td>กลับไปรัน SQL ในขั้นตอนที่ 3 ส่วนที่ 2</td>
                 </tr>
                 <tr>
-                    <td>🔒 RLS เปิดใช้งาน</td>
-                    <td>ทั้ง 2 ตารางเปิด RLS แล้ว</td>
-                    <td>กลับไปรัน SQL ในขั้นตอนที่ 4</td>
-                </tr>
-                <tr>
-                    <td>👤 บัญชีผู้ใช้</td>
+                    <td class="left">👤 บัญชีผู้ใช้</td>
                     <td>Email/Password ใช้ Login ได้</td>
                     <td>กลับไปสร้าง User ในขั้นตอนที่ 5</td>
                 </tr>
                 <tr>
-                    <td>🔐 สิทธิ์การเข้าถึง</td>
+                    <td class="left">🔐 สิทธิ์การเข้าถึง</td>
                     <td>หลัง Login แล้วอ่าน/เขียนข้อมูลได้</td>
                     <td>ตรวจสอบ Policy ในขั้นตอนที่ 4</td>
                 </tr>
@@ -751,37 +886,37 @@ USING (auth.role() = 'authenticated');</pre>
             </thead>
             <tbody>
                 <tr>
-                    <td>กดเข้าสู่ระบบแล้วไม่ขึ้นอะไร / ค้าง</td>
+                    <td class="left">กดเข้าสู่ระบบแล้วไม่ขึ้นอะไร / ค้าง</td>
                     <td>ยังไม่ได้ตั้งค่า Supabase URL/Key</td>
                     <td>กดปุ่ม "⚙️ ตั้งค่าฐานข้อมูล" ที่หน้า Login แล้วกรอกใหม่ตามขั้นตอน 6-7</td>
                 </tr>
                 <tr>
-                    <td>เข้าสู่ระบบไม่สำเร็จ: Invalid login credentials</td>
+                    <td class="left">เข้าสู่ระบบไม่สำเร็จ: Invalid login credentials</td>
                     <td>อีเมล/รหัสผ่านผิด หรือยังไม่ได้เปิด Auto Confirm User</td>
                     <td>ตรวจสอบใน Supabase → Authentication → Users ว่าสร้างบัญชีไว้แล้ว และสถานะเป็น Confirmed</td>
                 </tr>
                 <tr>
-                    <td>บันทึก/โหลดข้อมูลไม่ได้ (Failed to fetch)</td>
+                    <td class="left">บันทึก/โหลดข้อมูลไม่ได้ (Failed to fetch)</td>
                     <td>URL ผิดรูปแบบ เช่น มี /rest/v1/ ต่อท้าย หรือมี / ปิดท้าย</td>
                     <td>ไปที่แท็บ "ตั้งค่าระบบ" แก้ URL ให้เหลือแค่ <code>https://xxxx.supabase.co</code> โดยไม่มี / ปิดท้าย</td>
                 </tr>
                 <tr>
-                    <td>จำนวนห้องในเมนูไม่ตรงกับห้องจริง</td>
+                    <td class="left">จำนวนห้องในเมนูไม่ตรงกับห้องจริง</td>
                     <td>ยังไม่ได้ปรับค่า "จำนวนห้องทั้งหมดในหอพัก"</td>
                     <td>ไปที่แท็บ "ตั้งค่าระบบ" แก้ตัวเลขจำนวนห้อง เมนูจะอัปเดตอัตโนมัติ</td>
                 </tr>
                 <tr>
-                    <td>เปิดเว็บจากเครื่อง/เบราว์เซอร์อื่นแล้วต้องตั้งค่าใหม่ทุกครั้ง</td>
+                    <td class="left">เปิดเว็บจากเครื่อง/เบราว์เซอร์อื่นแล้วต้องตั้งค่าใหม่ทุกครั้ง</td>
                     <td>การตั้งค่าเก็บไว้ใน localStorage ของเบราว์เซอร์นั้นๆ เท่านั้น</td>
                     <td>ทำตามขั้นตอนที่ 6-7 ซ้ำในเบราว์เซอร์ใหม่</td>
                 </tr>
                 <tr>
-                    <td>หา Anon Key ไม่เจอ</td>
+                    <td class="left">หา Anon Key ไม่เจอ</td>
                     <td>เข้าผิดเมนู หรือยังไม่ได้คลิกแท็บที่ถูกต้อง</td>
                     <td>ไปที่ Project Settings › API Keys แล้วคลิกแท็บ "Legacy anon, service_role API keys" จะเห็นคีย์ anon ในนั้น</td>
                 </tr>
                 <tr>
-                    <td>ขั้นตอนที่ 8 แจ้งว่า "ไม่พบตาราง rooms_data"</td>
+                    <td class="left">ขั้นตอนที่ 8 แจ้งว่า "ไม่พบตาราง rooms_data"</td>
                     <td>ยังไม่ได้รัน SQL ส่วนที่ 2 ในขั้นตอนที่ 3</td>
                     <td>กลับไปรัน SQL ในขั้นตอนที่ 3 ส่วนที่ 2 แล้วรันอีกครั้ง</td>
                 </tr>
@@ -816,6 +951,7 @@ function copySQL(btn, elementId) {
 
 /* ============================================================
    ฟังก์ชันตรวจสอบความถูกต้องอัตโนมัติ (ขั้นตอนที่ 8)
+   ตรวจสอบ 5 รายการ (ไม่รวม RLS)
    ============================================================ */
 async function runVerification() {
     const url = document.getElementById('verifyUrl').value.trim();
@@ -846,12 +982,11 @@ async function runVerification() {
     itemsDiv.innerHTML = '';
     summaryDiv.classList.remove('show', 'success', 'error');
 
-    // รายการตรวจสอบ
+    // รายการตรวจสอบ (5 รายการ - ไม่รวม RLS)
     const checks = [
         { id: 'conn',   name: '📡 การเชื่อมต่อ Supabase',   desc: 'ตรวจสอบ URL และ Anon Key' },
         { id: 'table1', name: '📋 ตาราง room_records',     desc: 'ตรวจสอบว่ามีตารางนี้ในฐานข้อมูล' },
         { id: 'table2', name: '🏠 ตาราง rooms_data',       desc: 'ตรวจสอบว่ามีตารางนี้ในฐานข้อมูล' },
-        { id: 'rls',    name: '🔒 Row Level Security',     desc: 'ตรวจสอบว่าเปิด RLS แล้ว' },
         { id: 'auth',   name: '👤 บัญชีผู้ใช้',            desc: 'ตรวจสอบ Email/Password' },
         { id: 'access', name: '🔐 สิทธิ์การเข้าถึงข้อมูล', desc: 'ตรวจสอบการอ่าน/เขียนหลัง Login' }
     ];
@@ -925,23 +1060,7 @@ async function runVerification() {
             updateCheck('table2', 'error', 'ตรวจสอบไม่ได้: ' + e.message);
         }
 
-        // ========== 4. ตรวจสอบ RLS ==========
-        try {
-            const anonClient = window.supabase.createClient(url, key);
-            const { error: rlsErr } = await anonClient.from('room_records').select('id').limit(1);
-            
-            if (rlsErr && (rlsErr.code === 'PGRST301' || (rlsErr.message && rlsErr.message.includes('policy')) || rlsErr.status === 401)) {
-                updateCheck('rls', 'success', 'RLS เปิดใช้งาน - ข้อมูลปลอดภัย');
-            } else if (!rlsErr) {
-                updateCheck('rls', 'error', '⚠️ RLS อาจปิดอยู่ - ข้อมูลอาจเป็น Public! กรุณารัน SQL ในขั้นตอนที่ 4');
-            } else {
-                updateCheck('rls', 'success', 'RLS เปิดใช้งาน');
-            }
-        } catch (e) {
-            updateCheck('rls', 'error', 'ตรวจสอบไม่ได้: ' + e.message);
-        }
-
-        // ========== 5. ตรวจสอบ Auth (Login) ==========
+        // ========== 4. ตรวจสอบ Auth (Login) ==========
         let session = null;
         try {
             const { data, error: authErr } = await supabase.auth.signInWithPassword({
@@ -958,7 +1077,7 @@ async function runVerification() {
             updateCheck('auth', 'error', 'Login ไม่ได้: ' + e.message);
         }
 
-        // ========== 6. ตรวจสอบสิทธิ์การเข้าถึง (หลัง Login) ==========
+        // ========== 5. ตรวจสอบสิทธิ์การเข้าถึง (หลัง Login) ==========
         if (session) {
             try {
                 // ลองอ่านข้อมูล
@@ -995,7 +1114,7 @@ async function runVerification() {
     } catch (e) {
         if (e.message === 'CONNECTION_FAILED') {
             // ทำเครื่องหมายรายการที่เหลือเป็น skipped
-            ['table1', 'table2', 'rls', 'auth', 'access'].forEach(id => {
+            ['table1', 'table2', 'auth', 'access'].forEach(id => {
                 const el = document.getElementById('check-' + id);
                 if (el && el.classList.contains('checking')) {
                     el.classList.remove('checking');
@@ -1011,7 +1130,7 @@ async function runVerification() {
     summaryDiv.classList.add('show');
     if (passCount === checks.length) {
         summaryDiv.classList.add('success');
-        summaryDiv.innerHTML = '🎉 ผ่านการตรวจสอบทุก 항목! ระบบพร้อมใช้งานแล้ว<br><small style="font-weight: normal;">คุณสามารถกลับไปหน้าหลักและเริ่มใช้งานได้เลย</small>';
+        summaryDiv.innerHTML = '🎉 ผ่านการตรวจสอบทุกรายการ! ระบบพร้อมใช้งานแล้ว<br><small style="font-weight: normal;">คุณสามารถกลับไปหน้าหลักและเริ่มใช้งานได้เลย</small>';
     } else {
         summaryDiv.classList.add('error');
         summaryDiv.innerHTML = `⚠️ ผ่าน ${passCount} จาก ${checks.length} รายการ<br><small style="font-weight: normal;">กรุณาแก้ไขรายการที่ไม่ผ่านตามคำแนะนำ แล้วกดตรวจสอบใหม่อีกครั้ง</small>`;
@@ -1034,4 +1153,3 @@ window.addEventListener('DOMContentLoaded', () => {
 
 </body>
 </html>
-
