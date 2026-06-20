@@ -662,8 +662,17 @@
         });
         document.getElementById('mOccupied').addEventListener('change', function () {
             document.getElementById('mOccupiedLabel').textContent = this.checked ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
+            updateTenantPlaceholder(this.checked);
         });
     });
+
+    // ─── เปลี่ยนข้อความเตือนในช่อง "ชื่อผู้เช่า" ตามสถานะห้อง ─────────
+    // ถ้าเปิดสวิตช์ "มีผู้เช่า" จะขึ้นข้อความเตือนว่าห้ามปล่อยว่าง กันลืมกรอกชื่อ
+    function updateTenantPlaceholder(isOccupied) {
+        document.getElementById('mTenant').placeholder = isOccupied
+            ? 'ห้ามปล่อยว่าง เมื่อมีผู้เช่า'
+            : '(ไม่มีผู้เช่า)';
+    }
 
     function loadConfigToInputs() {
         const map = {
@@ -935,6 +944,7 @@
         document.getElementById('mPaidLabel').textContent  = paid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
         document.getElementById('mOccupied').checked      = occupied;
         document.getElementById('mOccupiedLabel').textContent = occupied ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
+        updateTenantPlaceholder(occupied);
         document.getElementById('modalMsg').textContent   = '';
 
         document.getElementById('roomModal').style.display = 'flex';
