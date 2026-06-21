@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard จัดการห้องพัก</title>
+    <title>Dashboard จัดการห้องเช่า</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -412,7 +412,7 @@
 <div id="loginOverlay">
     <div class="login-card">
         <div class="login-logo">🏠</div>
-        <h2>Dashboard จัดการห้องพัก</h2>
+        <h2>Dashboard จัดการห้องเช่า</h2>
         <p>เข้าสู่ระบบเพื่อดูและจัดการข้อมูลห้องทั้งหมด</p>
         <div class="form-group">
             <label>อีเมล</label>
@@ -427,7 +427,7 @@
         <button class="btn-login" id="loginBtn" onclick="handleLogin()">🔓 เข้าสู่ระบบ</button>
         <div id="loginError"></div>
         <div class="login-back">
-            <a href="index.html">← กลับหน้าออกบิล</a>
+            <a href="index.html">← กลับหน้าออกใบเสร็จ</a>
         </div>
     </div>
 </div>
@@ -438,10 +438,10 @@
     <!-- Top Nav -->
     <nav class="topnav">
         <div class="topnav-logo" id="navLogo">🏠</div>
-        <div class="topnav-title">Dashboard จัดการห้องพัก</div>
+        <div class="topnav-title">Dashboard จัดการห้องเช่า</div>
         <span class="topnav-user" id="navUser"></span>
         <div class="topnav-actions">
-            <a href="index.html" class="btn-nav btn-nav-ghost">📝 ออกบิล</a>
+            <a href="index.html" class="btn-nav btn-nav-ghost">📝 ออกใบเสร็จ</a>
             <button class="btn-nav btn-nav-red" onclick="handleLogout()">🔒 ออก</button>
         </div>
     </nav>
@@ -513,7 +513,7 @@
                         <input type="text" id="cfgLogoUrl" placeholder="URL รูปภาพโลโก้" oninput="saveConfig(); updateNavLogo()">
                     </div>
                     <div class="setting-item">
-                        <label>ข้อมูลบัญชีธนาคาร</label>
+                        <label>บัญชีธนาคาร / พร้อมเพย์</label>
                         <input type="text" id="cfgBankInfo" placeholder="กสิกรไทย 123-4-56789-0" oninput="saveConfig()">
                     </div>
                     <div class="setting-item">
@@ -523,7 +523,7 @@
                 </div>
                 <div class="settings-note">
                     💡 ค่าทั้งหมดบันทึกไว้ในเบราว์เซอร์นี้ ถ้าเปลี่ยนเครื่องต้องกรอกใหม่
-                    | ค่าน้ำ-ค่าไฟที่ตั้งไว้จะถูกดึงไปใช้ตอนออกบิลใน index.html โดยอัตโนมัติ
+                    | ค่าน้ำ-ค่าไฟที่ตั้งไว้จะถูกดึงไปใช้ตอนออกใบเสร็จใน index.html โดยอัตโนมัติ
                 </div>
                 <div class="settings-actions">
                     <button class="btn-danger-sm" onclick="clearAllConfig()">🗑️ ล้างทั้งหมดและออกจากระบบ</button>
@@ -534,7 +534,7 @@
         <!-- Room Grid Header -->
         <div class="section-header">
             <div>
-                <div class="section-title">📋 ห้องพักทั้งหมด</div>
+                <div class="section-title">📋 ห้องเช่าทั้งหมด</div>
                 <div class="section-sub" id="roomGridSub">กำลังโหลด...</div>
             </div>
             <button class="btn-save" onclick="initRoomsIfNeeded()" style="font-size:13px; padding:8px 18px;">
@@ -608,14 +608,14 @@
                 </div>
             </div>
 
-            <div class="modal-section-title">ข้อมูลบิลเดือนล่าสุด (แก้มิเตอร์ได้)</div>
+            <div class="modal-section-title">ข้อมูลใบเสร็จเดือนล่าสุด (แก้มิเตอร์ได้)</div>
             <div class="modal-field-grid">
                 <div class="modal-field">
                     <label>ค่าห้องรวมเดือนล่าสุด (บาท)</label>
                     <input type="number" id="mLastTotal" readonly style="background:var(--gray-light);color:var(--text-soft);">
                 </div>
                 <div class="modal-field">
-                    <label>วันที่ออกบิลล่าสุด</label>
+                    <label>วันที่ออกใบเสร็จล่าสุด</label>
                     <input type="text" id="mLastMonth" readonly style="background:var(--gray-light);color:var(--text-soft);">
                 </div>
                 <div class="modal-field">
@@ -662,17 +662,8 @@
         });
         document.getElementById('mOccupied').addEventListener('change', function () {
             document.getElementById('mOccupiedLabel').textContent = this.checked ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
-            updateTenantPlaceholder(this.checked);
         });
     });
-
-    // ─── เปลี่ยนข้อความเตือนในช่อง "ชื่อผู้เช่า" ตามสถานะห้อง ─────────
-    // ถ้าเปิดสวิตช์ "มีผู้เช่า" จะขึ้นข้อความเตือนว่าห้ามปล่อยว่าง กันลืมกรอกชื่อ
-    function updateTenantPlaceholder(isOccupied) {
-        document.getElementById('mTenant').placeholder = isOccupied
-            ? 'ห้ามปล่อยว่าง เมื่อมีผู้เช่า'
-            : '(ไม่มีผู้เช่า)';
-    }
 
     function loadConfigToInputs() {
         const map = {
@@ -872,7 +863,7 @@
                             <div class="room-meta-value">${(room.deposit || 0).toLocaleString()} ฿</div>
                         </div>
                         <div class="room-meta-item">
-                            <div class="room-meta-label">บิลล่าสุด</div>
+                            <div class="room-meta-label">ใบเสร็จล่าสุด</div>
                             <div class="room-meta-value ${isOverdue ? 'red' : ''}">${room.last_total ? (room.last_total).toLocaleString() + ' ฿' : '—'}</div>
                         </div>
                         <div class="room-meta-item">
@@ -944,7 +935,6 @@
         document.getElementById('mPaidLabel').textContent  = paid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
         document.getElementById('mOccupied').checked      = occupied;
         document.getElementById('mOccupiedLabel').textContent = occupied ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
-        updateTenantPlaceholder(occupied);
         document.getElementById('modalMsg').textContent   = '';
 
         document.getElementById('roomModal').style.display = 'flex';
