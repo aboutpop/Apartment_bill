@@ -146,24 +146,24 @@
             border-left: 4px solid transparent;
             display: flex; align-items: center; gap: 14px;
         }
-        .summary-card.total   { border-color: var(--blue-main); }
+        .summary-card.total    { border-color: var(--blue-main); }
         .summary-card.occupied { border-color: var(--green); }
-        .summary-card.vacant  { border-color: var(--gray); }
-        .summary-card.overdue { border-color: var(--red); }
+        .summary-card.vacant   { border-color: var(--gray); }
+        .summary-card.overdue  { border-color: var(--red); }
         .summary-icon {
             width: 44px; height: 44px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             font-size: 20px; flex-shrink: 0;
         }
-        .summary-card.total   .summary-icon { background: var(--blue-light); }
+        .summary-card.total    .summary-icon { background: var(--blue-light); }
         .summary-card.occupied .summary-icon { background: var(--green-light); }
-        .summary-card.vacant  .summary-icon { background: var(--gray-light); }
-        .summary-card.overdue .summary-icon { background: var(--red-light); }
+        .summary-card.vacant   .summary-icon { background: var(--gray-light); }
+        .summary-card.overdue  .summary-icon { background: var(--red-light); }
         .summary-num { font-size: 28px; font-weight: 800; line-height: 1; }
-        .summary-card.total   .summary-num { color: var(--blue-main); }
+        .summary-card.total    .summary-num { color: var(--blue-main); }
         .summary-card.occupied .summary-num { color: var(--green); }
-        .summary-card.vacant  .summary-num { color: var(--gray); }
-        .summary-card.overdue .summary-num { color: var(--red); }
+        .summary-card.vacant   .summary-num { color: var(--gray); }
+        .summary-card.overdue  .summary-num { color: var(--red); }
         .summary-label { font-size: 13px; color: var(--text-soft); margin-top: 3px; }
 
         /* ─── Section Header ─── */
@@ -220,7 +220,6 @@
             font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
         }
         .btn-danger-sm:hover { background: var(--red-light); }
-        .save-msg { font-size: 13px; font-weight: 600; color: var(--green); }
 
         /* ─── Room Grid ─── */
         .room-grid {
@@ -276,7 +275,6 @@
             display: grid; grid-template-columns: 1fr 1fr;
             gap: 6px;
         }
-        .room-meta-item { }
         .room-meta-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-soft); font-weight: 600; }
         .room-meta-value { font-size: 14px; font-weight: 700; color: var(--text-dark); }
         .room-meta-value.red { color: var(--red); }
@@ -290,7 +288,7 @@
         .paid-flag    { font-size: 12px; font-weight: 700; color: var(--green); }
         .room-card-footer .edit-hint { font-size: 11px; color: var(--text-soft); }
 
-        /* ─── Modal ─── */
+        /* ─── Modal (ใช้ร่วมกันทุก Modal) ─── */
         .modal-backdrop {
             position: fixed; inset: 0;
             background: rgba(17,24,39,0.55); backdrop-filter: blur(4px);
@@ -346,6 +344,7 @@
         .modal-footer {
             padding: 16px 26px 22px;
             display: flex; gap: 10px; justify-content: flex-end;
+            align-items: center;
         }
         .btn-modal-cancel {
             padding: 10px 22px; background: var(--gray-light);
@@ -358,14 +357,31 @@
             font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
         }
         .btn-modal-save:hover { background: var(--blue-dark); }
-        .modal-msg { font-size: 13px; font-weight: 600; color: var(--green); margin-right: auto; padding-left: 4px; min-height: 20px; }
+        .modal-msg {
+            font-size: 13px; font-weight: 600; color: var(--green);
+            margin-right: auto; padding-left: 4px; min-height: 20px;
+        }
 
-        /* ─── ซ่อนปุ่มขึ้น-ลงในช่องตัวเลขทุกช่อง ─── */
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type="number"] { -moz-appearance: textfield; }
-        /* occupied toggle สีน้ำเงิน */
-        .toggle-switch.occupied-toggle input:checked + .toggle-slider { background: var(--blue-main); }
+        /* ─── ปุ่มลบห้อง (ใน Modal แก้ไขห้อง) ─── */
+        .delete-room-section {
+            margin-top: 24px;
+            padding-top: 18px;
+            border-top: 2px dashed var(--red-light);
+        }
+        .delete-room-section p {
+            font-size: 13px; color: var(--text-soft); margin-bottom: 10px;
+        }
+        .btn-delete-room {
+            padding: 10px 20px; background: white; color: var(--red);
+            border: 1.5px solid var(--red); border-radius: var(--radius-sm);
+            font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+            transition: background 0.2s;
+        }
+        .btn-delete-room:hover { background: var(--red-light); }
+        .delete-msg {
+            margin-top: 10px; font-size: 13px; font-weight: 600;
+            color: var(--red); line-height: 1.7;
+        }
 
         /* ─── Toggle Switch ─── */
         .toggle-row { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
@@ -384,6 +400,12 @@
         }
         .toggle-switch input:checked + .toggle-slider { background: var(--green); }
         .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+        .toggle-switch.occupied-toggle input:checked + .toggle-slider { background: var(--blue-main); }
+
+        /* ─── ซ่อนปุ่มขึ้น-ลงในช่องตัวเลข ─── */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"] { -moz-appearance: textfield; }
 
         /* ─── Empty state ─── */
         .empty-state {
@@ -497,10 +519,6 @@
                         <input type="text" id="cfgKey" placeholder="eyJ..." oninput="saveConfig()">
                     </div>
                     <div class="setting-item">
-                        <label>จำนวนห้องทั้งหมด</label>
-                        <input type="number" id="cfgRoomCount" min="1" max="200" value="10" oninput="saveConfig()">
-                    </div>
-                    <div class="setting-item">
                         <label>ค่าน้ำต่อหน่วย (บาท)</label>
                         <input type="number" id="cfgWaterRate" value="30" step="0.5" oninput="saveConfig()">
                     </div>
@@ -537,8 +555,9 @@
                 <div class="section-title">📋 ห้องเช่าทั้งหมด</div>
                 <div class="section-sub" id="roomGridSub">กำลังโหลด...</div>
             </div>
-            <button class="btn-save" onclick="initRoomsIfNeeded()" style="font-size:13px; padding:8px 18px;">
-                ➕ เพิ่มห้องที่ขาดหายไป
+            <!-- ✅ เปลี่ยนจาก "เพิ่มห้องที่ขาดหายไป" เป็น "เพิ่มห้องใหม่" -->
+            <button class="btn-save" onclick="openAddRoomModal()" style="font-size:13px; padding:8px 18px;">
+                ➕ เพิ่มห้องใหม่
             </button>
         </div>
 
@@ -553,7 +572,7 @@
     </div>
 </div>
 
-<!-- ─── Room Detail Modal ─── -->
+<!-- ─── Modal แก้ไขห้อง (เดิม + เพิ่มส่วนลบ) ─── -->
 <div class="modal-backdrop" id="roomModal" style="display:none;" onclick="closeModalOnBackdrop(event)">
     <div class="modal">
         <div class="modal-header">
@@ -612,11 +631,11 @@
             <div class="modal-field-grid">
                 <div class="modal-field">
                     <label>ค่าห้องรวมเดือนล่าสุด (บาท)</label>
-                    <input type="number" id="mLastTotal" readonly style="background:var(--gray-light);color:var(--text-soft);">
+                    <input type="number" id="mLastTotal" readonly>
                 </div>
                 <div class="modal-field">
                     <label>วันที่ออกใบเสร็จล่าสุด</label>
-                    <input type="text" id="mLastMonth" readonly style="background:var(--gray-light);color:var(--text-soft);">
+                    <input type="text" id="mLastMonth" readonly>
                 </div>
                 <div class="modal-field">
                     <label>เลขมิเตอร์น้ำล่าสุด ✏️</label>
@@ -628,11 +647,49 @@
                 </div>
             </div>
 
+            <!-- ✅ ส่วนใหม่: ลบห้อง -->
+            <div class="delete-room-section">
+                <p>⚠️ ลบห้องได้เฉพาะห้องที่ว่างและไม่มีประวัติใบเสร็จเท่านั้น</p>
+                <button class="btn-delete-room" onclick="deleteRoom()">🗑️ ลบห้องนี้</button>
+                <div class="delete-msg" id="deleteMsg"></div>
+            </div>
+
         </div>
         <div class="modal-footer">
             <span class="modal-msg" id="modalMsg"></span>
             <button class="btn-modal-cancel" onclick="closeModal()">ยกเลิก</button>
             <button class="btn-modal-save" onclick="saveRoom()">💾 บันทึก</button>
+        </div>
+    </div>
+</div>
+
+<!-- ─── Modal เพิ่มห้องใหม่ (ใหม่) ─── -->
+<div class="modal-backdrop" id="addRoomModal" style="display:none;" onclick="closeAddRoomModalOnBackdrop(event)">
+    <div class="modal" style="max-width: 400px;">
+        <div class="modal-header">
+            <div>
+                <div class="modal-room-num" style="font-size:24px;">➕ เพิ่มห้องใหม่</div>
+                <div class="modal-title">กรอกข้อมูลห้องที่ต้องการเพิ่ม</div>
+            </div>
+            <button class="modal-close" onclick="closeAddRoomModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="modal-field" style="margin-bottom:16px;">
+                <label>เลขห้อง (สูงสุด 5 ตัวอักษร เช่น 1, A1, 201)</label>
+                <input type="text" id="newRoomNumber" placeholder=""
+                       maxlength="5"
+                       style="text-transform:uppercase; font-size:20px; font-weight:700; text-align:center;">
+                <div style="font-size:12px; color:var(--text-soft); margin-top:5px;" id="newRoomHint"></div>
+            </div>
+            <div class="modal-field">
+                <label>ค่าเช่าเริ่มต้น (บาท)</label>
+                <input type="number" id="newBaseRent" placeholder="2500" value="2500">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <span class="modal-msg" id="addRoomMsg" style="color:var(--red);"></span>
+            <button class="btn-modal-cancel" onclick="closeAddRoomModal()">ยกเลิก</button>
+            <button class="btn-modal-save" onclick="confirmAddRoom()">➕ เพิ่มห้อง</button>
         </div>
     </div>
 </div>
@@ -648,8 +705,8 @@
     };
 
     let supabaseClient = null;
-    let roomsData = [];
-    let currentRoomId = null;
+    let roomsData      = [];
+    let currentRoomId  = null;
 
     // ─── Init ─────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
@@ -667,14 +724,13 @@
 
     function loadConfigToInputs() {
         const map = {
-            supabaseUrl:  'cfgUrl',
-            supabaseKey:  'cfgKey',
-            roomCount:    'cfgRoomCount',
-            waterRate:    'cfgWaterRate',
-            elecRate:     'cfgElecRate',
-            logoUrl:      'cfgLogoUrl',
-            bankInfo:     'cfgBankInfo',
-            qrUrl:        'cfgQrUrl',
+            supabaseUrl: 'cfgUrl',
+            supabaseKey: 'cfgKey',
+            waterRate:   'cfgWaterRate',
+            elecRate:    'cfgElecRate',
+            logoUrl:     'cfgLogoUrl',
+            bankInfo:    'cfgBankInfo',
+            qrUrl:       'cfgQrUrl',
         };
         Object.entries(map).forEach(([k, id]) => {
             const val = store.get(k);
@@ -719,7 +775,7 @@
 
     window.handleLogin = async function () {
         const errorEl = document.getElementById('loginError');
-        const btn = document.getElementById('loginBtn');
+        const btn     = document.getElementById('loginBtn');
         errorEl.textContent = '';
 
         const ok = initSupabase();
@@ -759,26 +815,25 @@
 
     // ─── Config Save ───────────────────────────────────
     window.saveConfig = function () {
-        store.set('supabaseUrl',  document.getElementById('cfgUrl').value.trim());
-        store.set('supabaseKey',  document.getElementById('cfgKey').value.trim());
-        store.set('roomCount',    document.getElementById('cfgRoomCount').value);
-        store.set('waterRate',    document.getElementById('cfgWaterRate').value);
-        store.set('elecRate',     document.getElementById('cfgElecRate').value);
-        store.set('logoUrl',      document.getElementById('cfgLogoUrl').value.trim());
-        store.set('bankInfo',     document.getElementById('cfgBankInfo').value);
-        store.set('qrUrl',        document.getElementById('cfgQrUrl').value.trim());
+        store.set('supabaseUrl', document.getElementById('cfgUrl').value.trim());
+        store.set('supabaseKey', document.getElementById('cfgKey').value.trim());
+        store.set('waterRate',   document.getElementById('cfgWaterRate').value);
+        store.set('elecRate',    document.getElementById('cfgElecRate').value);
+        store.set('logoUrl',     document.getElementById('cfgLogoUrl').value.trim());
+        store.set('bankInfo',    document.getElementById('cfgBankInfo').value);
+        store.set('qrUrl',       document.getElementById('cfgQrUrl').value.trim());
     };
 
     window.clearAllConfig = async function () {
         if (!confirm('ล้างการตั้งค่าทั้งหมดและออกจากระบบ?')) return;
         if (supabaseClient) { try { await supabaseClient.auth.signOut(); } catch {} supabaseClient = null; }
-        ['supabaseUrl','supabaseKey','roomCount','waterRate','elecRate','logoUrl','bankInfo','qrUrl'].forEach(k => store.remove(k));
+        ['supabaseUrl','supabaseKey','waterRate','elecRate','logoUrl','bankInfo','qrUrl'].forEach(k => store.remove(k));
         location.reload();
     };
 
     window.updateNavLogo = function () {
         const url = document.getElementById('cfgLogoUrl')?.value.trim() || store.get('logoUrl') || '';
-        const el = document.getElementById('navLogo');
+        const el  = document.getElementById('navLogo');
         if (!el) return;
         el.innerHTML = url
             ? `<img src="${url}" alt="logo" onerror="this.parentElement.textContent='🏠'">`
@@ -786,7 +841,7 @@
     };
 
     window.toggleSettings = function () {
-        const body = document.getElementById('settingsBody');
+        const body   = document.getElementById('settingsBody');
         const toggle = document.getElementById('settingsToggle');
         const isOpen = body.classList.toggle('open');
         toggle.classList.toggle('open', isOpen);
@@ -812,7 +867,7 @@
             grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
                 <div class="icon">⚠️</div>
                 <h3>ยังไม่มีตาราง rooms_data</h3>
-                <p style="margin-top:8px; font-size:14px;">กรุณาสร้างตารางใน Supabase ก่อน (ดูคำแนะนำในขั้นตอนที่ 1)</p>
+                <p style="margin-top:8px; font-size:14px;">กรุณาสร้างตารางใน Supabase ก่อน (ดูคำแนะนำใน setup.html)</p>
             </div>`;
         }
     }
@@ -825,17 +880,17 @@
             grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;">
                 <div class="icon">🏠</div>
                 <h3>ยังไม่มีข้อมูลห้อง</h3>
-                <p style="margin-top:8px;">กดปุ่ม "เพิ่มห้องที่ขาดหายไป" เพื่อสร้างห้องอัตโนมัติ</p>
+                <p style="margin-top:8px;">กดปุ่ม "➕ เพิ่มห้องใหม่" เพื่อเริ่มเพิ่มห้องแรก</p>
             </div>`;
         }
 
         let occupied = 0, vacant = 0, overdue = 0;
 
         roomsData.forEach(room => {
-            const hasTenant = room.tenant_name && room.tenant_name.trim() !== '';
-            const isOverdue = hasTenant && !room.paid_status;
-            let statusClass = hasTenant ? (isOverdue ? 'overdue' : 'occupied') : 'vacant';
-            let statusText  = hasTenant ? (isOverdue ? '⚠️ ค้างชำระ' : '✅ มีผู้เช่า') : '🔑 ว่าง';
+            const hasTenant  = room.tenant_name && room.tenant_name.trim() !== '';
+            const isOverdue  = hasTenant && !room.paid_status;
+            let statusClass  = hasTenant ? (isOverdue ? 'overdue' : 'occupied') : 'vacant';
+            let statusText   = hasTenant ? (isOverdue ? '⚠️ ค้างชำระ' : '✅ มีผู้เช่า') : '🔑 ว่าง';
 
             if (hasTenant) occupied++;
             else vacant++;
@@ -843,7 +898,7 @@
 
             const card = document.createElement('div');
             card.className = `room-card ${statusClass}`;
-            card.onclick = () => openModal(room.id);
+            card.onclick   = () => openModal(room.id);
             card.innerHTML = `
                 <div class="room-card-top">
                     <div class="room-number">${room.room_number}</div>
@@ -887,55 +942,35 @@
         document.getElementById('sumOccupied').textContent = occupied;
         document.getElementById('sumVacant').textContent   = vacant;
         document.getElementById('sumOverdue').textContent  = overdue;
-        document.getElementById('roomGridSub').textContent = `แสดง ${total} ห้อง | มีผู้เช่า ${occupied} ห้อง | ว่าง ${vacant} ห้อง`;
+        document.getElementById('roomGridSub').textContent =
+            `แสดง ${total} ห้อง | มีผู้เช่า ${occupied} ห้อง | ว่าง ${vacant} ห้อง`;
     }
 
-    // ─── Init Rooms (สร้างห้องที่ขาด) ─────────────────
-    window.initRoomsIfNeeded = async function () {
-        if (!supabaseClient) return;
-        const count = parseInt(store.get('roomCount') || '10');
-        const existingNums = roomsData.map(r => r.room_number);
-        const toInsert = [];
-        for (let i = 1; i <= count; i++) {
-            if (!existingNums.includes(i)) {
-                toInsert.push({ room_number: i, base_rent: 2500, deposit: 0, paid_status: false });
-            }
-        }
-        if (toInsert.length === 0) { alert('ห้องครบทุกห้องแล้วครับ!'); return; }
-        try {
-            const { error } = await supabaseClient.from('rooms_data').insert(toInsert);
-            if (error) throw error;
-            alert(`✅ เพิ่มห้อง ${toInsert.length} ห้องเรียบร้อย`);
-            await loadRooms();
-        } catch (e) {
-            alert('❌ ' + e.message);
-        }
-    };
-
-    // ─── Modal ─────────────────────────────────────────
+    // ─── Modal แก้ไขห้อง ───────────────────────────────
     window.openModal = function (id) {
         const room = roomsData.find(r => r.id === id);
         if (!room) return;
         currentRoomId = id;
 
-        document.getElementById('mRoomNum').textContent  = room.room_number;
-        document.getElementById('mTenant').value         = room.tenant_name  || '';
-        document.getElementById('mPhone').value          = room.phone        || '';
-        document.getElementById('mDeposit').value        = room.deposit      ?? '';
-        document.getElementById('mBaseRent').value       = room.base_rent    ?? '';
-        document.getElementById('mFine').value           = room.fine         ?? '';
-        document.getElementById('mLastTotal').value      = room.last_total   ?? '';
-        document.getElementById('mLastMonth').value      = room.last_month   || '';
-        document.getElementById('mLastWater').value      = room.last_water   ?? '';
-        document.getElementById('mLastElec').value       = room.last_elec    ?? '';
+        document.getElementById('mRoomNum').textContent   = room.room_number;
+        document.getElementById('mTenant').value          = room.tenant_name  || '';
+        document.getElementById('mPhone').value           = room.phone        || '';
+        document.getElementById('mDeposit').value         = room.deposit      ?? '';
+        document.getElementById('mBaseRent').value        = room.base_rent    ?? '';
+        document.getElementById('mFine').value            = room.fine         ?? '';
+        document.getElementById('mLastTotal').value       = room.last_total   ?? '';
+        document.getElementById('mLastMonth').value       = room.last_month   || '';
+        document.getElementById('mLastWater').value       = room.last_water   ?? '';
+        document.getElementById('mLastElec').value        = room.last_elec    ?? '';
 
         const paid     = !!room.paid_status;
         const occupied = !!(room.tenant_name && room.tenant_name.trim() !== '');
-        document.getElementById('mPaidStatus').checked    = paid;
-        document.getElementById('mPaidLabel').textContent  = paid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
-        document.getElementById('mOccupied').checked      = occupied;
+        document.getElementById('mPaidStatus').checked        = paid;
+        document.getElementById('mPaidLabel').textContent     = paid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ❌';
+        document.getElementById('mOccupied').checked          = occupied;
         document.getElementById('mOccupiedLabel').textContent = occupied ? 'มีผู้เช่า 🏠' : 'ห้องว่าง 🔑';
-        document.getElementById('modalMsg').textContent   = '';
+        document.getElementById('modalMsg').textContent       = '';
+        document.getElementById('deleteMsg').textContent      = '';
 
         document.getElementById('roomModal').style.display = 'flex';
     };
@@ -952,18 +987,19 @@
     window.saveRoom = async function () {
         if (!supabaseClient || !currentRoomId) return;
         const msgEl = document.getElementById('modalMsg');
-        msgEl.textContent = '';
+        msgEl.style.color   = 'var(--green)';
+        msgEl.textContent   = '';
 
         const isOccupied = document.getElementById('mOccupied').checked;
         const payload = {
             tenant_name: isOccupied ? document.getElementById('mTenant').value.trim() : '',
-            phone:       isOccupied ? document.getElementById('mPhone').value.trim() : '',
-            deposit:     parseFloat(document.getElementById('mDeposit').value) || 0,
-            base_rent:   parseFloat(document.getElementById('mBaseRent').value) || 0,
-            fine:        parseFloat(document.getElementById('mFine').value) || 0,
+            phone:       isOccupied ? document.getElementById('mPhone').value.trim()   : '',
+            deposit:     parseFloat(document.getElementById('mDeposit').value)   || 0,
+            base_rent:   parseFloat(document.getElementById('mBaseRent').value)  || 0,
+            fine:        parseFloat(document.getElementById('mFine').value)       || 0,
             paid_status: document.getElementById('mPaidStatus').checked,
-            last_water:  parseFloat(document.getElementById('mLastWater').value) || 0,
-            last_elec:   parseFloat(document.getElementById('mLastElec').value) || 0,
+            last_water:  parseFloat(document.getElementById('mLastWater').value)  || 0,
+            last_elec:   parseFloat(document.getElementById('mLastElec').value)   || 0,
         };
 
         try {
@@ -977,6 +1013,150 @@
             setTimeout(closeModal, 800);
         } catch (e) {
             msgEl.style.color = 'var(--red)';
+            msgEl.textContent = '❌ ' + e.message;
+        }
+    };
+
+    // ─── ✅ ลบห้อง (เช็ค 3 ชั้น) ──────────────────────
+    window.deleteRoom = async function () {
+        if (!supabaseClient || !currentRoomId) return;
+
+        const room    = roomsData.find(r => r.id === currentRoomId);
+        const msgEl   = document.getElementById('deleteMsg');
+        msgEl.textContent = '';
+
+        // ── เช็คชั้นที่ 1 และ 2: ชื่อผู้เช่า และเงินมัดจำ ──
+        const reasons = [];
+        const hasTenant  = room.tenant_name && room.tenant_name.trim() !== '';
+        const hasDeposit = (room.deposit || 0) > 0;
+
+        if (hasTenant)  reasons.push('มีชื่อผู้เช่า');
+        if (hasDeposit) reasons.push('มีเงินมัดจำ');
+
+        // ── เช็คชั้นที่ 3: ประวัติใบเสร็จใน room_records ──
+        try {
+            const { data: records, error: recErr } = await supabaseClient
+                .from('room_records')
+                .select('id', { count: 'exact' })
+                .eq('room', room.room_number);
+
+            if (!recErr && records && records.length > 0) {
+                reasons.push(`มีประวัติใบเสร็จ ${records.length} รายการ`);
+            }
+        } catch (e) {
+            // ถ้าดึงไม่ได้ ให้ปลอดภัยไว้ก่อน
+            reasons.push('ไม่สามารถตรวจสอบประวัติใบเสร็จได้');
+        }
+
+        // ── ถ้ามีเหตุผลห้ามลบ แสดงข้อความและหยุด ──
+        if (reasons.length > 0) {
+            msgEl.textContent = '❌ ลบไม่ได้ เพราะ: ' + reasons.join(' / ');
+            return;
+        }
+
+        // ── ผ่านทุกเงื่อนไข: ขอยืนยันก่อนลบ ──
+        const confirmed = confirm(`⚠️ ยืนยันลบห้อง ${room.room_number} หรือไม่?\n\nการลบนี้ไม่สามารถย้อนกลับได้`);
+        if (!confirmed) return;
+
+        try {
+            const { error } = await supabaseClient
+                .from('rooms_data')
+                .delete()
+                .eq('id', currentRoomId);
+            if (error) throw error;
+
+            closeModal();
+            await loadRooms();
+            alert(`✅ ลบห้อง ${room.room_number} เรียบร้อยแล้ว`);
+        } catch (e) {
+            msgEl.textContent = '❌ เกิดข้อผิดพลาด: ' + e.message;
+        }
+    };
+
+    // ─── ✅ Modal เพิ่มห้องใหม่ ────────────────────────
+    window.openAddRoomModal = function () {
+        // เดาเลขห้องถัดไป: ดูห้องล่าสุด ถ้าเป็นตัวเลขล้วน +1
+        const suggested = guessNextRoomNumber();
+        const input = document.getElementById('newRoomNumber');
+        input.value = suggested;
+
+        const hint = document.getElementById('newRoomHint');
+        hint.textContent = suggested
+            ? `ระบบแนะนำเลข ${suggested} — แก้ไขได้ถ้าต้องการ`
+            : 'กรอกเลขห้องที่ต้องการ';
+
+        document.getElementById('newBaseRent').value  = '2500';
+        document.getElementById('addRoomMsg').textContent = '';
+        document.getElementById('addRoomModal').style.display = 'flex';
+
+        // focus ที่ช่องเลขห้อง
+        setTimeout(() => input.focus(), 100);
+    };
+
+    function guessNextRoomNumber() {
+        if (roomsData.length === 0) return '1';
+
+        // หาห้องล่าสุด (เรียงตาม room_number)
+        const lastRoom = roomsData[roomsData.length - 1];
+        const lastNum  = lastRoom.room_number;
+
+        // ถ้าเป็นตัวเลขล้วน → +1
+        if (/^\d+$/.test(lastNum)) {
+            return String(parseInt(lastNum) + 1);
+        }
+
+        // ถ้าเป็นตัวอักษรหรือผสม → ไม่เดา ให้พิมพ์เอง
+        return '';
+    }
+
+    window.closeAddRoomModal = function () {
+        document.getElementById('addRoomModal').style.display = 'none';
+    };
+
+    window.closeAddRoomModalOnBackdrop = function (e) {
+        if (e.target.id === 'addRoomModal') closeAddRoomModal();
+    };
+
+    window.confirmAddRoom = async function () {
+        if (!supabaseClient) return;
+        const msgEl   = document.getElementById('addRoomMsg');
+        msgEl.textContent = '';
+
+        const rawNum  = document.getElementById('newRoomNumber').value.trim().toUpperCase();
+        const baseRent = parseFloat(document.getElementById('newBaseRent').value) || 0;
+
+        // ── Validate ──
+        if (!rawNum) {
+            msgEl.textContent = '❌ กรุณากรอกเลขห้อง';
+            return;
+        }
+        if (rawNum.length > 5) {
+            msgEl.textContent = '❌ เลขห้องต้องไม่เกิน 5 ตัวอักษร';
+            return;
+        }
+
+        // เช็คว่าเลขห้องซ้ำไหม
+        const exists = roomsData.some(r => r.room_number.toUpperCase() === rawNum);
+        if (exists) {
+            msgEl.textContent = `❌ ห้อง ${rawNum} มีอยู่แล้วในระบบ`;
+            return;
+        }
+
+        try {
+            const { error } = await supabaseClient
+                .from('rooms_data')
+                .insert([{
+                    room_number: rawNum,
+                    base_rent:   baseRent,
+                    deposit:     0,
+                    paid_status: false
+                }]);
+            if (error) throw error;
+
+            closeAddRoomModal();
+            await loadRooms();
+            alert(`✅ เพิ่มห้อง ${rawNum} เรียบร้อยแล้ว`);
+        } catch (e) {
             msgEl.textContent = '❌ ' + e.message;
         }
     };
