@@ -197,6 +197,12 @@
             <button id="loginBtn" class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="handleLogin()">
                 🔓 เข้าสู่ระบบ
             </button>
+            <!-- ✅ กล่องแจ้งเตือนเมื่อ session หมดอายุจากแท็บอื่น -->
+            <div id="sessionExpiredMsg" style="display:none; margin-top:12px; padding:10px 14px;
+                background:#fee2e2; border:1px solid #dc2626; border-radius:8px;
+                font-size:13px; font-weight:600; color:#dc2626;">
+                ⚠️ Session หมดอายุหรือถูกออกจากระบบจากแท็บอื่น กรุณาเข้าสู่ระบบใหม่
+            </div>
             <div id="loginError" style="color:red; margin-top:15px; font-size:14px; font-weight:bold; min-height:20px;"></div>
         </div>
 
@@ -487,12 +493,36 @@
                     detectSessionInUrl: false
                 }
             });
+
+            // ✅ ฟัง event session จากทุกแท็บ — ถ้าถูก logout จากที่อื่นจะแสดงแจ้งเตือนทันที
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    showLoginWithExpiredMessage();
+                } else if (event === 'SIGNED_IN' && session) {
+                    // กรณี login จากแท็บนี้จะถูก handle ใน handleLogin แล้ว
+                    // ที่นี่ handle กรณี login จากแท็บอื่น
+                }
+            });
+
             updateDbStatusBadge(true);
             return true;
         }
         supabaseClient = null;
         updateDbStatusBadge(false);
         return false;
+    }
+
+    // ✅ แสดง login overlay พร้อมข้อความแจ้งเตือน session หมด
+    function showLoginWithExpiredMessage() {
+        document.getElementById('sessionExpiredMsg').style.display = 'block';
+        document.getElementById('loginPassword').value  = '';
+        document.getElementById('loginError').innerText = '';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainApp').style.display      = 'none';
+        document.getElementById('userEmailDisplay').textContent = '';
+        const url = store.get('supabaseUrl');
+        const key = store.get('supabaseKey');
+        updateDbStatusBadge(!!(url && key));
     }
 
     function updateDbStatusBadge(isConfigured) {
@@ -587,6 +617,7 @@
     }
 
     function hideApp() {
+        document.getElementById('sessionExpiredMsg').style.display = 'none';
         document.getElementById('loginOverlay').style.display = 'flex';
         document.getElementById('mainApp').style.display      = 'none';
         document.getElementById('userEmailDisplay').textContent = '';
@@ -905,16 +936,17 @@
             const { error } = await supabaseClient.from('room_records').insert([payload]);
             if (error) throw error;
 
-            // อัปเดต rooms_data: เลขมิเตอร์ล่าสุด
+            // อัปเดต rooms_data: เลขมิเตอร์ล่าสุด + ล้าง meter_edited flag
             try {
                 await supabaseClient
                     .from('rooms_data')
                     .update({
-                        last_water:  waterAfter,
-                        last_elec:   elecAfter,
-                        last_total:  grandTotal,
-                        last_month:  formattedDate,
-                        paid_status: false
+                        last_water:   waterAfter,
+                        last_elec:    elecAfter,
+                        last_total:   grandTotal,
+                        last_month:   formattedDate,
+                        paid_status:  false,
+                        meter_edited: false   // ✅ ล้าง flag เมื่อออกบิลใหม่สำเร็จ
                     })
                     .eq('room_number', roomNo);
             } catch (dashErr) {
