@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="shared-style.css">
     <script src="billing-calc.js"></script>
     <style>
+        /* เหลือเฉพาะสไตล์ที่ใช้เฉพาะหน้านี้ ส่วนที่ใช้ร่วมกับ calculator.html
+           (สี, ตาราง, ปุ่ม, กล่องใบเสร็จ ฯลฯ) ย้ายไปอยู่ใน shared-style.css แล้ว */
         /* ─── Login Overlay ─── */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -31,6 +33,20 @@
         .login-input-group input {
             width: 100%; padding: 12px; border: 1px solid #bbb;
             border-radius: 6px; font-size: 16px;
+        }
+
+        /* ─── ข้อความแจ้งเตือนเมื่อ session หมด ─── */
+        #sessionExpiredMsg {
+            display: none;
+            background: #fce8e8;
+            border: 1px solid #d32f2f;
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: #d32f2f;
+            margin-bottom: 18px;
+            text-align: center;
         }
 
         /* ─── Pre-Login Settings Overlay ─── */
@@ -160,6 +176,12 @@
                 <span style="font-size:14px; font-weight:normal; color:#666;">กรุณาเข้าสู่ระบบก่อนใช้งาน</span>
             </h3>
 
+            <!-- แสดงเมื่อ session หมดอายุ / ถูก Logout จากหน้าอื่น -->
+            <div id="sessionExpiredMsg">
+                ⚠️ Session หมดอายุหรือถูกออกจากระบบแล้ว กรุณา Login ใหม่อีกครั้ง
+            </div>
+
+            <!-- รวมสถานะฐานข้อมูล + ลิงก์ตั้งค่า ไว้ในกรอบเดียวกัน -->
             <div class="db-status-box">
                 <div id="dbStatusWarning" class="db-status-warning">⚠️ ยังไม่ได้ตั้งค่าฐานข้อมูล</div>
                 <button class="btn-link-style" id="dbSettingsLink" onclick="openPreLoginSettings()">
@@ -183,6 +205,7 @@
             <div id="loginError" style="color:red; margin-top:15px; font-size:14px; font-weight:bold; min-height:20px;"></div>
         </div>
 
+        <!-- กล่องแยกสำหรับผู้ที่ไม่ต้องการ Login แค่อยากคำนวณบิล -->
         <div class="guest-box">
             <a href="calculator.html" target="_blank" class="btn-guest">🧾 ใบเสร็จเปล่า</a>
             <div class="guest-desc">คำนวณและพิมพ์ใบเสร็จค่าเช่า โดยไม่ต้อง login</div>
@@ -390,7 +413,7 @@
             </div>
         </div>
 
-        <!-- hidden inputs -->
+        <!-- hidden inputs ที่ยังต้องใช้ใน JS แต่ไม่แสดงผล -->
         <div style="display:none;">
             <input type="text" id="supabaseUrl">
             <input type="text" id="supabaseKey">
@@ -407,18 +430,21 @@
 (function () {
     'use strict';
 
+    // ─── State ───────────────────────────────────────────────────────
     let supabaseClient = null;
     let globalHistoryData = [];
     let currentPage = 1;
     const ROWS_PER_PAGE = 12;
     let filteredData = [];
 
+    // ─── Storage helpers ──────────────────────────────────────────────
     const store = {
         get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
         set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} },
         remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} }
     };
 
+    // ─── Init ─────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
         loadSettingsToInputs();
         applyRoomCount();
@@ -428,13 +454,14 @@
         calculateInvoice();
     });
 
+    // ─── โหลดค่า settings จาก localStorage ใส่ input ─────────────────
     function loadSettingsToInputs() {
         const map = {
-            'supabaseUrl': 'supabaseUrl',
-            'supabaseKey': 'supabaseKey',
-            'bankInfo':    'bankInfoInput',
-            'logoUrl':     'logoUrlInput',
-            'qrUrl':       'qrUrlInput',
+            'supabaseUrl':    'supabaseUrl',
+            'supabaseKey':    'supabaseKey',
+            'bankInfo':       'bankInfoInput',
+            'logoUrl':        'logoUrlInput',
+            'qrUrl':          'qrUrlInput',
         };
         Object.entries(map).forEach(([storageKey, inputId]) => {
             const val = store.get(storageKey);
@@ -454,6 +481,7 @@
         updateDateDisplay(dateInput);
     }
 
+    // ─── Supabase Init ────────────────────────────────────────────────
     function initSupabase() {
         const url = document.getElementById('supabaseUrl').value.trim();
         const key = document.getElementById('supabaseKey').value.trim();
@@ -465,6 +493,18 @@
                     detectSessionInUrl: false
                 }
             });
+
+            // ✅ ฟัง event การเปลี่ยนแปลง session จากทุกแท็บ/หน้า
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    // session หมดหรือถูก Logout จากหน้าอื่น → แสดง Login overlay ทันที
+                    showLoginWithExpiredMessage();
+                } else if (event === 'SIGNED_IN' && session) {
+                    // Login สำเร็จ → โหลดข้อมูลใหม่
+                    showApp(session.user.email);
+                }
+            });
+
             updateDbStatusBadge(true);
             return true;
         }
@@ -475,7 +515,7 @@
 
     function updateDbStatusBadge(isConfigured) {
         const warningEl = document.getElementById('dbStatusWarning');
-        const linkBtn   = document.getElementById('dbSettingsLink');
+        const linkBtn    = document.getElementById('dbSettingsLink');
         if (isConfigured) {
             warningEl.style.display = 'none';
             linkBtn.textContent = '⚙️ แก้ไขการตั้งค่าฐานข้อมูล Supabase';
@@ -485,20 +525,28 @@
         }
     }
 
+    // ─── ตรวจสอบ session เมื่อโหลดหน้า ──────────────────────────────
     async function initSupabaseAndCheckSession() {
         const initialized = initSupabase();
-        if (!initialized) { hideApp(); return; }
+        if (!initialized) {
+            hideApp();
+            return;
+        }
         try {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (error) throw error;
-            if (session) showApp(session.user.email);
-            else hideApp();
+            if (session) {
+                showApp(session.user.email);
+            } else {
+                hideApp();
+            }
         } catch (e) {
             console.error('Session check error:', e);
             hideApp();
         }
     }
 
+    // ─── Login ────────────────────────────────────────────────────────
     window.handleLogin = async function () {
         const errorEl = document.getElementById('loginError');
         const btnLogin = document.getElementById('loginBtn');
@@ -523,6 +571,7 @@
 
         try {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
             if (error) {
                 let msg = error.message;
                 if (msg.includes('Invalid login credentials')) msg = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
@@ -530,6 +579,8 @@
                 if (msg.includes('Too many requests'))         msg = 'ลองใหม่อีกครั้งในภายหลัง (ร้องขอบ่อยเกินไป)';
                 errorEl.innerText = '❌ ' + msg;
             } else {
+                // showApp จะถูกเรียกโดย onAuthStateChange อัตโนมัติ
+                // แต่เรียกซ้ำที่นี่ด้วยเพื่อความรวดเร็ว
                 showApp(data.user.email);
             }
         } catch (e) {
@@ -540,20 +591,29 @@
         }
     };
 
+    // ─── Logout ───────────────────────────────────────────────────────
     window.handleLogout = async function () {
         if (supabaseClient) {
-            try { await supabaseClient.auth.signOut(); } catch (e) {
+            try {
+                await supabaseClient.auth.signOut();
+                // onAuthStateChange จะ catch SIGNED_OUT และเรียก showLoginWithExpiredMessage เอง
+            } catch (e) {
                 console.warn('SignOut error (ignored):', e.message);
             }
             supabaseClient = null;
         }
+
         document.getElementById('loginEmail').value    = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').innerText = '';
+
+        // เรียก hideApp โดยตรง (ไม่แสดง expired message เพราะ user กด logout เอง)
         hideApp();
     };
 
+    // ─── Show/Hide App ────────────────────────────────────────────────
     function showApp(userEmail) {
+        document.getElementById('sessionExpiredMsg').style.display = 'none';
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         if (userEmail) {
@@ -563,14 +623,32 @@
     }
 
     function hideApp() {
+        // ซ่อนข้อความ session หมด (กรณี logout ปกติ)
+        document.getElementById('sessionExpiredMsg').style.display = 'none';
         document.getElementById('loginOverlay').style.display = 'flex';
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('userEmailDisplay').textContent = '';
+
         const url = store.get('supabaseUrl');
         const key = store.get('supabaseKey');
         updateDbStatusBadge(!!(url && key));
     }
 
+    function showLoginWithExpiredMessage() {
+        // แสดงข้อความแจ้งเตือน session หมด พร้อมเคลียร์ช่อง password
+        document.getElementById('sessionExpiredMsg').style.display = 'block';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').innerText = '';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+        document.getElementById('userEmailDisplay').textContent = '';
+
+        const url = store.get('supabaseUrl');
+        const key = store.get('supabaseKey');
+        updateDbStatusBadge(!!(url && key));
+    }
+
+    // ─── Settings ─────────────────────────────────────────────────────
     window.saveSettings = function () {
         store.set('supabaseUrl', document.getElementById('supabaseUrl').value);
         store.set('supabaseKey', document.getElementById('supabaseKey').value);
@@ -583,6 +661,7 @@
         updateDisplayFromSettings();
     };
 
+    // ─── Pre-Login Settings ───────────────────────────────────────────
     window.openPreLoginSettings = function () {
         document.getElementById('preSupabaseUrl').value = store.get('supabaseUrl') || '';
         document.getElementById('preSupabaseKey').value = store.get('supabaseKey') || '';
@@ -630,6 +709,7 @@
         }, 1200);
     };
 
+    // ─── Clear All Settings ───────────────────────────────────────────
     window.clearAllSettings = async function () {
         const confirmed = confirm(
             '⚠️ ต้องการล้างการตั้งค่าทั้งหมดในเบราว์เซอร์นี้หรือไม่?\n\n' +
@@ -669,6 +749,7 @@
         alert('✅ ล้างการตั้งค่าทั้งหมดเรียบร้อย กรุณาตั้งค่า Supabase ใหม่ก่อนเข้าสู่ระบบ');
     };
 
+    // ─── Room Count ───────────────────────────────────────────────────
     function applyRoomCount(overrideCount) {
         let count = overrideCount || parseInt(document.getElementById('roomCountInput').value) || 10;
         count = Math.min(Math.max(count, 1), 200);
@@ -706,6 +787,7 @@
         }
     }
 
+    // ─── Display From Settings ────────────────────────────────────────
     function updateDisplayFromSettings() {
         const bankInfo = document.getElementById('bankInfoInput').value;
         document.getElementById('bankInfoShow').innerText =
@@ -732,6 +814,7 @@
         }
     }
 
+    // ─── Tab Switching ────────────────────────────────────────────────
     window.switchTab = function (tabId, btnEl) {
         document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -740,6 +823,7 @@
         if (tabId === 'history-tab') fetchHistoryFromSupabase();
     };
 
+    // ─── Date Helpers ─────────────────────────────────────────────────
     window.updateDateDisplay = function (input) {
         if (input.value) {
             const [y, m, d] = input.value.split('-');
@@ -755,6 +839,7 @@
         return `${d}/${m}/${y}`;
     }
 
+    // ─── Auto Fetch ───────────────────────────────────────────────────
     window.autoFetchLastMeter = async function () {
         if (!supabaseClient) return;
         const room = document.getElementById('roomNo').value;
@@ -804,6 +889,7 @@
         calculateInvoice();
     };
 
+    // ─── Save to Supabase ─────────────────────────────────────────────
     window.sendDataToSupabase = async function () {
         if (!supabaseClient) return alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ!');
 
@@ -856,17 +942,15 @@
             const { error } = await supabaseClient.from('room_records').insert([payload]);
             if (error) throw error;
 
-            // อัปเดต rooms_data + ล้าง meter_edited flag (ใหม่)
             try {
                 await supabaseClient
                     .from('rooms_data')
                     .update({
-                        last_water:   waterAfter,
-                        last_elec:    elecAfter,
-                        last_total:   grandTotal,
-                        last_month:   formattedDate,
-                        paid_status:  false,
-                        meter_edited: false   // ✅ ล้าง flag เมื่อออกบิลใหม่สำเร็จ
+                        last_water: waterAfter,
+                        last_elec:  elecAfter,
+                        last_total: grandTotal,
+                        last_month: formattedDate,
+                        paid_status: false
                     })
                     .eq('room_number', parseInt(roomNo));
             } catch (dashErr) {
@@ -883,6 +967,7 @@
         }
     };
 
+    // ─── History ──────────────────────────────────────────────────────
     window.fetchHistoryFromSupabase = async function () {
         if (!supabaseClient) return;
         const tbody = document.getElementById('historyTableBody');

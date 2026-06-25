@@ -67,6 +67,20 @@
         .login-card p {
             font-size: 14px; color: var(--text-soft); margin-bottom: 28px;
         }
+
+        /* ─── ข้อความแจ้งเตือนเมื่อ session หมด ─── */
+        #sessionExpiredMsg {
+            display: none;
+            background: var(--red-light);
+            border: 1px solid var(--red);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--red);
+            margin-bottom: 18px;
+        }
+
         .form-group { margin-bottom: 18px; text-align: left; }
         .form-group label {
             display: block; font-size: 13px; font-weight: 600;
@@ -281,23 +295,10 @@
         .room-meta-value { font-size: 14px; font-weight: 700; color: var(--text-dark); }
         .room-meta-value.red { color: var(--red); }
 
-        /* ─── Meter Edited Note (ใหม่) ─── */
-        .meter-edited-note {
-            margin: 8px 18px 0;
-            padding: 6px 10px;
-            background: #fff8e1;
-            border-left: 3px solid #f59e0b;
-            border-radius: 4px;
-            font-size: 11px;
-            color: #92400e;
-            line-height: 1.6;
-        }
-
         .room-card-footer {
             padding: 10px 18px; background: var(--gray-light);
             border-top: 1px solid var(--gray-border);
             display: flex; align-items: center; justify-content: space-between;
-            margin-top: 10px;
         }
         .overdue-flag { font-size: 12px; font-weight: 700; color: var(--red); }
         .paid-flag    { font-size: 12px; font-weight: 700; color: var(--green); }
@@ -356,16 +357,6 @@
         .modal-field input[readonly] {
             background: var(--gray-light); color: var(--text-soft);
         }
-
-        /* ─── Meter Change Hint (ใหม่) ─── */
-        .meter-change-hint {
-            font-size: 11px; color: #92400e;
-            background: #fff8e1; border-radius: 4px;
-            padding: 4px 8px; margin-top: 5px;
-            display: none;
-        }
-        .meter-change-hint.visible { display: block; }
-
         .modal-footer {
             padding: 16px 26px 22px;
             display: flex; gap: 10px; justify-content: flex-end;
@@ -387,6 +378,7 @@
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"] { -moz-appearance: textfield; }
+        /* occupied toggle สีน้ำเงิน */
         .toggle-switch.occupied-toggle input:checked + .toggle-slider { background: var(--blue-main); }
 
         /* ─── Toggle Switch ─── */
@@ -436,6 +428,12 @@
         <div class="login-logo">🏠</div>
         <h2>Dashboard จัดการห้องเช่า</h2>
         <p>เข้าสู่ระบบเพื่อดูและจัดการข้อมูลห้องทั้งหมด</p>
+
+        <!-- แสดงเมื่อ session หมดอายุ / ถูก Logout จากหน้าอื่น -->
+        <div id="sessionExpiredMsg">
+            ⚠️ Session หมดอายุหรือถูกออกจากระบบแล้ว กรุณา Login ใหม่อีกครั้ง
+        </div>
+
         <div class="form-group">
             <label>อีเมล</label>
             <input type="email" id="loginEmail" placeholder="example@email.com"
@@ -642,15 +640,11 @@
                 </div>
                 <div class="modal-field">
                     <label>เลขมิเตอร์น้ำล่าสุด ✏️</label>
-                    <input type="number" id="mLastWater" placeholder="0" oninput="onMeterInput('water')">
-                    <!-- ข้อความแสดงเมื่อมีการแก้ไขมิเตอร์น้ำ -->
-                    <div class="meter-change-hint" id="hintWater"></div>
+                    <input type="number" id="mLastWater" placeholder="0">
                 </div>
                 <div class="modal-field">
                     <label>เลขมิเตอร์ไฟล่าสุด ✏️</label>
-                    <input type="number" id="mLastElec" placeholder="0" oninput="onMeterInput('elec')">
-                    <!-- ข้อความแสดงเมื่อมีการแก้ไขมิเตอร์ไฟ -->
-                    <div class="meter-change-hint" id="hintElec"></div>
+                    <input type="number" id="mLastElec" placeholder="0">
                 </div>
             </div>
 
@@ -676,10 +670,6 @@
     let supabaseClient = null;
     let roomsData = [];
     let currentRoomId = null;
-
-    // เก็บค่าเดิมของมิเตอร์ก่อนแก้ไข เพื่อเปรียบเทียบว่ามีการเปลี่ยนแปลงหรือไม่
-    let originalWater = null;
-    let originalElec  = null;
 
     // ─── Init ─────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', () => {
@@ -720,6 +710,19 @@
             supabaseClient = supabase.createClient(url, key, {
                 auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
             });
+
+            // ✅ ฟัง event การเปลี่ยนแปลง session จากทุกแท็บ/หน้า
+            supabaseClient.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_OUT') {
+                    // session หมดหรือถูก Logout จากหน้าอื่น → แสดง Login overlay ทันที
+                    closeModal(); // ปิด modal ถ้าเปิดอยู่
+                    showLoginWithExpiredMessage();
+                } else if (event === 'SIGNED_IN' && session) {
+                    // Login สำเร็จ (จากแท็บนี้หรือแท็บอื่น) → โหลดข้อมูลใหม่
+                    showApp(session.user.email);
+                }
+            });
+
             return true;
         }
         supabaseClient = null;
@@ -735,18 +738,33 @@
         } catch { showLogin(); }
     }
 
+    // ─── Show / Hide ───────────────────────────────────
+
     function showLogin() {
+        // ซ่อนข้อความ session หมดอายุ (กรณีเปิดหน้าใหม่ปกติ)
+        document.getElementById('sessionExpiredMsg').style.display = 'none';
+        document.getElementById('loginOverlay').style.display = 'flex';
+        document.getElementById('mainApp').style.display = 'none';
+    }
+
+    function showLoginWithExpiredMessage() {
+        // แสดงข้อความแจ้งเตือน session หมด พร้อมเคลียร์ช่อง password
+        document.getElementById('sessionExpiredMsg').style.display = 'block';
+        document.getElementById('loginPassword').value = '';
+        document.getElementById('loginError').textContent = '';
         document.getElementById('loginOverlay').style.display = 'flex';
         document.getElementById('mainApp').style.display = 'none';
     }
 
     async function showApp(email) {
+        document.getElementById('sessionExpiredMsg').style.display = 'none';
         document.getElementById('loginOverlay').style.display = 'none';
         document.getElementById('mainApp').style.display = 'block';
         document.getElementById('navUser').textContent = '👤 ' + email;
         await loadRooms();
     }
 
+    // ─── Login ─────────────────────────────────────────
     window.handleLogin = async function () {
         const errorEl = document.getElementById('loginError');
         const btn = document.getElementById('loginBtn');
@@ -770,6 +788,8 @@
                 if (msg.includes('Invalid login credentials')) msg = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
                 errorEl.textContent = '❌ ' + msg;
             } else {
+                // showApp จะถูกเรียกโดย onAuthStateChange อัตโนมัติ
+                // แต่เรียกซ้ำที่นี่ด้วยเพื่อความรวดเร็ว
                 showApp(data.user.email);
             }
         } catch (e) {
@@ -779,9 +799,12 @@
         }
     };
 
+    // ─── Logout ────────────────────────────────────────
     window.handleLogout = async function () {
         if (supabaseClient) {
             try { await supabaseClient.auth.signOut(); } catch {}
+            // onAuthStateChange จะ catch SIGNED_OUT และเรียก showLoginWithExpiredMessage เอง
+            // แต่เรียก showLogin ซ้ำที่นี่เพื่อกรณีที่ listener ช้า
             supabaseClient = null;
         }
         showLogin();
@@ -871,21 +894,6 @@
             else vacant++;
             if (isOverdue) overdue++;
 
-            // ─── สร้างข้อความแจ้งเตือนมิเตอร์ถูกแก้ (ใหม่) ───
-            let meterNoteHtml = '';
-            if (room.meter_edited) {
-                const parts = [];
-                if (room.last_water != null) parts.push(`น้ำ: <b>${room.last_water}</b>`);
-                if (room.last_elec  != null) parts.push(`ไฟ: <b>${room.last_elec}</b>`);
-                if (parts.length > 0) {
-                    meterNoteHtml = `
-                        <div class="meter-edited-note">
-                            📝 มิเตอร์แก้ไขแล้ว — ${parts.join(' | ')}
-                            <br><span style="font-size:10px; color:#b45309;">จะหายไปเมื่อออกบิลรอบถัดไป</span>
-                        </div>`;
-                }
-            }
-
             const card = document.createElement('div');
             card.className = `room-card ${statusClass}`;
             card.onclick = () => openModal(room.id);
@@ -917,7 +925,6 @@
                         </div>
                     </div>
                 </div>
-                ${meterNoteHtml}
                 <div class="room-card-footer">
                     <span class="${isOverdue ? 'overdue-flag' : 'paid-flag'}">
                         ${!hasTenant ? '' : (isOverdue ? '❌ ยังไม่จ่าย' : '✅ จ่ายแล้ว')}
@@ -975,18 +982,6 @@
         document.getElementById('mLastWater').value      = room.last_water   ?? '';
         document.getElementById('mLastElec').value       = room.last_elec    ?? '';
 
-        // บันทึกค่าเดิมไว้เปรียบเทียบ
-        originalWater = room.last_water ?? null;
-        originalElec  = room.last_elec  ?? null;
-
-        // ซ่อน hint ทุกครั้งที่เปิด modal ใหม่
-        const hintW = document.getElementById('hintWater');
-        const hintE = document.getElementById('hintElec');
-        hintW.textContent = '';
-        hintW.classList.remove('visible');
-        hintE.textContent = '';
-        hintE.classList.remove('visible');
-
         const paid     = !!room.paid_status;
         const occupied = !!(room.tenant_name && room.tenant_name.trim() !== '');
         document.getElementById('mPaidStatus').checked    = paid;
@@ -998,36 +993,9 @@
         document.getElementById('roomModal').style.display = 'flex';
     };
 
-    // ─── แสดง hint ทันทีที่พิมพ์เลขมิเตอร์ (ใหม่) ───
-    window.onMeterInput = function (type) {
-        if (type === 'water') {
-            const newVal = parseFloat(document.getElementById('mLastWater').value);
-            const hint   = document.getElementById('hintWater');
-            if (!isNaN(newVal) && newVal !== originalWater) {
-                hint.textContent = `📝 จะเปลี่ยนเป็น ${newVal} (เดิม: ${originalWater ?? '—'})`;
-                hint.classList.add('visible');
-            } else {
-                hint.textContent = '';
-                hint.classList.remove('visible');
-            }
-        } else {
-            const newVal = parseFloat(document.getElementById('mLastElec').value);
-            const hint   = document.getElementById('hintElec');
-            if (!isNaN(newVal) && newVal !== originalElec) {
-                hint.textContent = `📝 จะเปลี่ยนเป็น ${newVal} (เดิม: ${originalElec ?? '—'})`;
-                hint.classList.add('visible');
-            } else {
-                hint.textContent = '';
-                hint.classList.remove('visible');
-            }
-        }
-    };
-
     window.closeModal = function () {
         document.getElementById('roomModal').style.display = 'none';
         currentRoomId = null;
-        originalWater = null;
-        originalElec  = null;
     };
 
     window.closeModalOnBackdrop = function (e) {
@@ -1037,29 +1005,18 @@
     window.saveRoom = async function () {
         if (!supabaseClient || !currentRoomId) return;
         const msgEl = document.getElementById('modalMsg');
-        msgEl.style.color = 'var(--green)';
         msgEl.textContent = '';
 
         const isOccupied = document.getElementById('mOccupied').checked;
-        const newWater   = parseFloat(document.getElementById('mLastWater').value);
-        const newElec    = parseFloat(document.getElementById('mLastElec').value);
-
-        // ตรวจว่ามิเตอร์มีการเปลี่ยนแปลงจากค่าเดิมหรือไม่
-        const waterChanged = !isNaN(newWater) && newWater !== originalWater;
-        const elecChanged  = !isNaN(newElec)  && newElec  !== originalElec;
-        const meterEdited  = waterChanged || elecChanged;
-
         const payload = {
-            tenant_name:  isOccupied ? document.getElementById('mTenant').value.trim() : '',
-            phone:        isOccupied ? document.getElementById('mPhone').value.trim() : '',
-            deposit:      parseFloat(document.getElementById('mDeposit').value)   || 0,
-            base_rent:    parseFloat(document.getElementById('mBaseRent').value)  || 0,
-            fine:         parseFloat(document.getElementById('mFine').value)      || 0,
-            paid_status:  document.getElementById('mPaidStatus').checked,
-            last_water:   isNaN(newWater) ? (originalWater ?? 0) : newWater,
-            last_elec:    isNaN(newElec)  ? (originalElec  ?? 0) : newElec,
-            // ถ้ามิเตอร์เปลี่ยน → true | ถ้าไม่เปลี่ยน → คงค่าเดิมไว้ (ไม่ reset)
-            ...(meterEdited ? { meter_edited: true } : {})
+            tenant_name: isOccupied ? document.getElementById('mTenant').value.trim() : '',
+            phone:       isOccupied ? document.getElementById('mPhone').value.trim() : '',
+            deposit:     parseFloat(document.getElementById('mDeposit').value) || 0,
+            base_rent:   parseFloat(document.getElementById('mBaseRent').value) || 0,
+            fine:        parseFloat(document.getElementById('mFine').value) || 0,
+            paid_status: document.getElementById('mPaidStatus').checked,
+            last_water:  parseFloat(document.getElementById('mLastWater').value) || 0,
+            last_elec:   parseFloat(document.getElementById('mLastElec').value) || 0,
         };
 
         try {
