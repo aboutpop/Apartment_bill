@@ -9,6 +9,8 @@
     <link rel="stylesheet" href="shared-style.css">
     <script src="billing-calc.js"></script>
     <style>
+        /* เหลือเฉพาะสไตล์ที่ใช้เฉพาะหน้านี้ ส่วนที่ใช้ร่วมกับ calculator.html
+           (สี, ตาราง, ปุ่ม, กล่องใบเสร็จ ฯลฯ) ย้ายไปอยู่ใน shared-style.css แล้ว */
         /* ─── Login Overlay ─── */
         #loginOverlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -82,30 +84,26 @@
         .image-right-section { display: flex; gap: 20px; align-items: flex-start; }
         .qr-section { text-align: center; background: transparent; border: none; padding: 0; width: 140px; }
         .logo-section { text-align: center; background: transparent; border: none; padding: 0; width: 161px; display: flex; align-items: center; justify-content: center; }
-        .qr-placeholder { width: 140px; height: 140px; background: transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; border: 1px dashed #ccc; }
-        .logo-placeholder { width: 161px; height: 161px; background: transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; border: 1px dashed #ccc; }
+        .qr-placeholder {
+            width: 140px; height: 140px; background: transparent; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: #999; border: 1px dashed #ccc;
+        }
+        .logo-placeholder {
+            width: 161px; height: 161px; background: transparent; margin: 0 auto;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; color: #999; border: 1px dashed #ccc;
+        }
         .qr-text { font-size: 12px; font-weight: bold; color: #1a237e; margin-top: 5px; }
         .btn:disabled { background-color: #ccc; color: #666; cursor: not-allowed; }
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-success:hover:not(:disabled) { background-color: #2c974b; }
 
-        /* ─── Header ปุ่ม Dashboard ─── */
-        .btn-dashboard-header {
-            background: #1a3a6b; color: white; border: none;
-            padding: 8px 16px; border-radius: 4px; cursor: pointer;
-            font-weight: bold; font-size: 14px; text-decoration: none;
-            display: inline-flex; align-items: center; gap: 5px;
+        .tab-btn.tab-btn-dashboard {
+            background: #1a3a6b; color: white; text-decoration: none;
+            display: inline-flex; align-items: center;
         }
-        .btn-dashboard-header:hover { background: #0f2548; }
-
-        /* ─── ปุ่มรีเฟรชห้อง (แทน tab Dashboard เดิม) ─── */
-        .tab-btn-refresh {
-            background: #e8f0fe; color: #1a3a6b; border: none;
-            padding: 12px 20px; cursor: pointer; font-size: 14px; font-weight: bold;
-            border-top-left-radius: 8px; border-top-right-radius: 8px;
-            margin-right: 4px; transition: all 0.2s;
-        }
-        .tab-btn-refresh:hover { background: #c8d9f5; }
+        .tab-btn.tab-btn-dashboard:hover { background: #0f2548; }
 
         /* ─── Config Tab ─── */
         .config-group { margin-bottom: 15px; }
@@ -113,6 +111,7 @@
         .filter-section {
             background: #eee; padding: 15px; border-radius: 6px;
             margin-bottom: 20px; display: flex; align-items: center; gap: 15px;
+            flex-wrap: wrap;
         }
         .pagination-container {
             display: flex; justify-content: center; align-items: center;
@@ -127,7 +126,8 @@
         }
         .db-status-warning {
             color: #b45309; background: #fff3e0; border-radius: 6px;
-            padding: 6px 10px; font-size: 13px; font-weight: bold; margin-bottom: 8px;
+            padding: 6px 10px; font-size: 13px; font-weight: bold;
+            margin-bottom: 8px;
         }
 
         /* ─── Guest Box ─── */
@@ -146,14 +146,14 @@
         .btn-guest:hover { background: #9a3412; }
         .guest-desc { font-size: 13px; color: #666; margin-top: 12px; line-height: 1.7; }
 
-        /* ─── Meter Edited Notice (แท็บประวัติ) ─── */
-        .meter-edited-banner {
-            background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px;
-            padding: 12px 16px; margin-bottom: 16px;
-            font-size: 14px; color: #92400e;
-            display: flex; align-items: flex-start; gap: 10px;
+        /* ─── Export CSV Button ─── */
+        .btn-export-csv {
+            background: #16a34a; color: white; border: none;
+            padding: 8px 16px; border-radius: 6px; font-size: 14px;
+            font-weight: bold; cursor: pointer;
         }
-        .meter-edited-banner .banner-icon { font-size: 18px; flex-shrink: 0; }
+        .btn-export-csv:hover { background: #15803d; }
+        .btn-export-csv:disabled { background: #9ca3af; cursor: not-allowed; }
 
         @media print {
             .header-area, .tabs, .btn-group, .filter-section, .config-group, h3,
@@ -172,12 +172,14 @@
             <h3>🏠 ระบบออกใบเสร็จและจัดการห้องเช่า สำหรับ SME<br>
                 <span style="font-size:14px; font-weight:normal; color:#666;">กรุณาเข้าสู่ระบบก่อนใช้งาน</span>
             </h3>
+
             <div class="db-status-box">
                 <div id="dbStatusWarning" class="db-status-warning">⚠️ ยังไม่ได้ตั้งค่าฐานข้อมูล</div>
                 <button class="btn-link-style" id="dbSettingsLink" onclick="openPreLoginSettings()">
                     ⚙️ ตั้งค่าฐานข้อมูล Supabase ของฉัน (สำหรับผู้ใช้ใหม่)
                 </button>
             </div>
+
             <div class="login-input-group">
                 <label>อีเมลผู้ใช้งาน (Email):</label>
                 <input type="email" id="loginEmail" placeholder="example@email.com"
@@ -193,6 +195,7 @@
             </button>
             <div id="loginError" style="color:red; margin-top:15px; font-size:14px; font-weight:bold; min-height:20px;"></div>
         </div>
+
         <div class="guest-box">
             <a href="calculator.html" target="_blank" class="btn-guest">🧾 ใบเสร็จเปล่า</a>
             <div class="guest-desc">คำนวณและพิมพ์ใบเสร็จค่าเช่า โดยไม่ต้อง login</div>
@@ -221,6 +224,11 @@
             <label>Supabase Anon API Key:</label>
             <input type="text" id="preSupabaseKey" placeholder="ใส่คีย์สาธารณะ anon ของคุณ">
         </div>
+        <div class="login-input-group">
+            <label>จำนวนห้องทั้งหมดในหอพัก:</label>
+            <input type="number" id="preRoomCount" min="1" max="200" value="10"
+                   style="text-align:left;" placeholder="10">
+        </div>
         <button class="btn btn-primary" style="width:100%; margin-top:6px;" onclick="savePreLoginSettings()">
             💾 บันทึกและกลับไปเข้าสู่ระบบ
         </button>
@@ -242,7 +250,6 @@
             <h2>🏠 ระบบออกใบเสร็จและจัดการห้องเช่า สำหรับ SME</h2>
             <div style="display:flex; align-items:center; gap:12px;">
                 <span id="userEmailDisplay" style="font-size:14px; color:#555;"></span>
-                <a href="rooms_data.html" target="_blank" class="btn-dashboard-header">🏠 Dashboard จัดการห้อง</a>
                 <button class="logout-btn" onclick="handleLogout()">🔒 ออกจากระบบ</button>
             </div>
         </div>
@@ -250,7 +257,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('invoice-tab', this)">📝 ออกใบเสร็จค่าเช่า</button>
             <button class="tab-btn" onclick="switchTab('history-tab', this)">📊 ประวัติข้อมูลรายห้อง</button>
-            <button class="tab-btn-refresh" onclick="refreshRoomList()">🔄 รีเฟรชห้อง</button>
+            <a href="rooms_data.html" class="tab-btn tab-btn-dashboard" target="_blank">🏠 Dashboard จัดการห้อง</a>
         </div>
 
         <!-- แท็บออกบิล -->
@@ -264,7 +271,7 @@
                                 <label style="font-size:48px;">ห้องที่:</label>
                                 <select id="roomNo"
                                     style="width:130px; display:inline-block; font-size:48px; font-weight:bold; height:70px;"
-                                    onchange="onRoomChange()">
+                                    onchange="autoFetchLastMeter()">
                                 </select>
                             </div>
                             <div class="meta-item">
@@ -357,21 +364,14 @@
         <!-- แท็บประวัติ -->
         <div id="history-tab" class="tab-content">
             <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง</h3>
-
-            <!-- แจ้งเตือน meter_edited — แสดงเมื่อห้องที่เลือกมีการแก้ไขมิเตอร์ -->
-            <div id="meterEditedBanner" class="meter-edited-banner" style="display:none;">
-                <span class="banner-icon">🔧</span>
-                <div>
-                    <strong>มิเตอร์ถูกแก้ไขหลังออกบิล</strong><br>
-                    <span id="meterEditedDetail">เลขมิเตอร์ของห้องนี้ถูกแก้ไขใน Dashboard หลังจากออกบิลล่าสุด ตรวจสอบให้แน่ใจก่อนออกบิลครั้งต่อไป</span>
-                </div>
-            </div>
-
             <div class="filter-section">
                 <label style="font-weight:bold; font-size:16px;">เลือกหมายเลขห้อง:</label>
-                <select id="historyRoomSelect" style="width:120px;" onchange="onHistoryRoomChange()"></select>
+                <select id="historyRoomSelect" style="width:120px;" onchange="resetPageAndFilter()"></select>
                 <button class="btn btn-primary" onclick="fetchHistoryFromSupabase()"
                     style="padding:8px 16px; font-size:14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
+                <button class="btn-export-csv" id="exportCsvBtn" onclick="exportCSV()">
+                    📥 Export CSV
+                </button>
             </div>
             <div style="overflow-x:auto;">
                 <table id="historyTable">
@@ -410,6 +410,7 @@
         <div style="display:none;">
             <input type="text" id="supabaseUrl">
             <input type="text" id="supabaseKey">
+            <input type="number" id="roomCountInput" value="10">
             <input type="text" id="bankInfoInput">
             <input type="text" id="logoUrlInput">
             <input type="text" id="qrUrlInput">
@@ -428,36 +429,39 @@
     let currentPage = 1;
     const ROWS_PER_PAGE = 12;
     let filteredData = [];
-    let roomsList = []; // รายชื่อห้องจากฐานข้อมูล
 
-    // ─── Storage helpers ─────────────────────────────────────────────
+    // ─── Storage helpers (ใช้ผ่าน wrapper เพื่อรองรับกรณี sandbox) ───
     const store = {
-        get:    (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
-        set:    (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} },
+        get: (key) => { try { return localStorage.getItem(key); } catch(e) { return null; } },
+        set: (key, val) => { try { localStorage.setItem(key, val); } catch(e) {} },
         remove: (key) => { try { localStorage.removeItem(key); } catch(e) {} }
     };
 
     // ─── Init ─────────────────────────────────────────────────────────
     document.addEventListener('DOMContentLoaded', function () {
         loadSettingsToInputs();
+        applyRoomCount();
         setTodayDate();
         initSupabaseAndCheckSession();
         updateDisplayFromSettings();
         calculateInvoice();
     });
 
+    // ─── โหลดค่า settings จาก localStorage ใส่ input ─────────────────
     function loadSettingsToInputs() {
         const map = {
-            'supabaseUrl': 'supabaseUrl',
-            'supabaseKey': 'supabaseKey',
-            'bankInfo':    'bankInfoInput',
-            'logoUrl':     'logoUrlInput',
-            'qrUrl':       'qrUrlInput',
+            'supabaseUrl':    'supabaseUrl',
+            'supabaseKey':    'supabaseKey',
+            'bankInfo':       'bankInfoInput',
+            'logoUrl':        'logoUrlInput',
+            'qrUrl':          'qrUrlInput',
         };
         Object.entries(map).forEach(([storageKey, inputId]) => {
             const val = store.get(storageKey);
             if (val) document.getElementById(inputId).value = val;
         });
+        const savedCount = store.get('roomCount');
+        document.getElementById('roomCountInput').value = savedCount || 10;
     }
 
     function setTodayDate() {
@@ -476,7 +480,11 @@
         const key = document.getElementById('supabaseKey').value.trim();
         if (url && key) {
             supabaseClient = supabase.createClient(url, key, {
-                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
+                auth: {
+                    persistSession: true,
+                    autoRefreshToken: true,
+                    detectSessionInUrl: false
+                }
             });
             updateDbStatusBadge(true);
             return true;
@@ -488,7 +496,7 @@
 
     function updateDbStatusBadge(isConfigured) {
         const warningEl = document.getElementById('dbStatusWarning');
-        const linkBtn   = document.getElementById('dbSettingsLink');
+        const linkBtn    = document.getElementById('dbSettingsLink');
         if (isConfigured) {
             warningEl.style.display = 'none';
             linkBtn.textContent = '⚙️ แก้ไขการตั้งค่าฐานข้อมูล Supabase';
@@ -498,9 +506,13 @@
         }
     }
 
+    // ─── ตรวจสอบ session เมื่อโหลดหน้า ──────────────────────────────
     async function initSupabaseAndCheckSession() {
         const initialized = initSupabase();
-        if (!initialized) { hideApp(); return; }
+        if (!initialized) {
+            hideApp();
+            return;
+        }
         try {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (error) throw error;
@@ -517,7 +529,7 @@
 
     // ─── Login ────────────────────────────────────────────────────────
     window.handleLogin = async function () {
-        const errorEl  = document.getElementById('loginError');
+        const errorEl = document.getElementById('loginError');
         const btnLogin = document.getElementById('loginBtn');
         errorEl.innerText = '';
 
@@ -529,6 +541,7 @@
 
         const email    = document.getElementById('loginEmail').value.trim();
         const password = document.getElementById('loginPassword').value;
+
         if (!email || !password) {
             errorEl.innerText = '❌ กรุณากรอกอีเมลและรหัสผ่านให้ครบถ้วน';
             return;
@@ -539,6 +552,7 @@
 
         try {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
             if (error) {
                 let msg = error.message;
                 if (msg.includes('Invalid login credentials')) msg = 'อีเมลหรือรหัสผ่านไม่ถูกต้อง';
@@ -559,12 +573,18 @@
     // ─── Logout ───────────────────────────────────────────────────────
     window.handleLogout = async function () {
         if (supabaseClient) {
-            try { await supabaseClient.auth.signOut(); } catch (e) {}
+            try {
+                await supabaseClient.auth.signOut();
+            } catch (e) {
+                console.warn('SignOut error (ignored):', e.message);
+            }
             supabaseClient = null;
         }
+
         document.getElementById('loginEmail').value    = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').innerText = '';
+
         hideApp();
     };
 
@@ -575,72 +595,37 @@
         if (userEmail) {
             document.getElementById('userEmailDisplay').textContent = '👤 ' + userEmail;
         }
-
-        // ตรวจ session หมดอายุ
-        supabaseClient.auth.onAuthStateChange((event) => {
-            if (event === 'SIGNED_OUT') hideApp();
-        });
-
-        loadRoomsList().then(() => autoFetchLastMeter());
+        syncRoomCountFromDB().then(() => autoFetchLastMeter());
     }
 
     function hideApp() {
         document.getElementById('loginOverlay').style.display = 'flex';
         document.getElementById('mainApp').style.display = 'none';
         document.getElementById('userEmailDisplay').textContent = '';
+
         const url = store.get('supabaseUrl');
         const key = store.get('supabaseKey');
         updateDbStatusBadge(!!(url && key));
     }
 
-    // ─── โหลดรายชื่อห้องจาก DB ───────────────────────────────────────
-    async function loadRoomsList() {
-        if (!supabaseClient) return;
-        try {
-            const { data, error } = await supabaseClient
-                .from('rooms_data')
-                .select('room_number, meter_edited')
-                .order('room_number', { ascending: true });
-
-            if (error) throw error;
-            roomsList = data || [];
-            populateRoomDropdowns();
-        } catch (e) {
-            console.warn('loadRoomsList error:', e.message);
-            roomsList = [];
-            populateRoomDropdowns();
-        }
-    }
-
-    function populateRoomDropdowns() {
-        const roomNoSel  = document.getElementById('roomNo');
-        const historySel = document.getElementById('historyRoomSelect');
-        const prevRoom    = store.get('lastSelectedRoom')    || roomNoSel.value;
-        const prevHistory = store.get('lastSelectedHistory') || historySel.value;
-
-        let html = '';
-        roomsList.forEach(r => {
-            html += `<option value="${r.room_number}">${r.room_number}</option>`;
-        });
-
-        roomNoSel.innerHTML  = html;
-        historySel.innerHTML = html;
-
-        // คืนค่าที่เคยเลือกไว้
-        if (prevRoom    && roomsList.some(r => r.room_number === prevRoom))    roomNoSel.value  = prevRoom;
-        if (prevHistory && roomsList.some(r => r.room_number === prevHistory)) historySel.value = prevHistory;
-    }
-
-    // รีเฟรชรายชื่อห้อง (ปุ่ม 🔄)
-    window.refreshRoomList = async function () {
-        await loadRoomsList();
-        await autoFetchLastMeter();
+    // ─── Settings ─────────────────────────────────────────────────────
+    window.saveSettings = function () {
+        store.set('supabaseUrl', document.getElementById('supabaseUrl').value);
+        store.set('supabaseKey', document.getElementById('supabaseKey').value);
+        store.set('bankInfo',    document.getElementById('bankInfoInput').value);
+        store.set('logoUrl',     document.getElementById('logoUrlInput').value);
+        store.set('qrUrl',       document.getElementById('qrUrlInput').value);
+        store.set('roomCount',   document.getElementById('roomCountInput').value);
+        applyRoomCount();
+        initSupabase();
+        updateDisplayFromSettings();
     };
 
     // ─── Pre-Login Settings ───────────────────────────────────────────
     window.openPreLoginSettings = function () {
         document.getElementById('preSupabaseUrl').value = store.get('supabaseUrl') || '';
         document.getElementById('preSupabaseKey').value = store.get('supabaseKey') || '';
+        document.getElementById('preRoomCount').value   = store.get('roomCount')   || 10;
         document.getElementById('preLoginSettingsMsg').innerText = '';
         document.getElementById('preLoginSettingsOverlay').style.display = 'flex';
     };
@@ -650,8 +635,8 @@
     };
 
     window.savePreLoginSettings = function () {
-        const url   = document.getElementById('preSupabaseUrl').value.trim();
-        const key   = document.getElementById('preSupabaseKey').value.trim();
+        const url = document.getElementById('preSupabaseUrl').value.trim();
+        const key = document.getElementById('preSupabaseKey').value.trim();
         const msgEl = document.getElementById('preLoginSettingsMsg');
 
         if (!url || !key) {
@@ -662,20 +647,29 @@
 
         store.set('supabaseUrl', url);
         store.set('supabaseKey', key);
-        document.getElementById('supabaseUrl').value = url;
-        document.getElementById('supabaseKey').value = key;
 
+        let roomCount = parseInt(document.getElementById('preRoomCount').value) || 10;
+        roomCount = Math.min(Math.max(roomCount, 1), 200);
+        store.set('roomCount', roomCount);
+
+        document.getElementById('supabaseUrl').value    = url;
+        document.getElementById('supabaseKey').value    = key;
+        document.getElementById('roomCountInput').value = roomCount;
+
+        applyRoomCount();
         initSupabase();
         updateDisplayFromSettings();
 
         msgEl.style.color = 'var(--success-color)';
         msgEl.innerText = '✅ บันทึกเรียบร้อย! กำลังกลับไปหน้าเข้าสู่ระบบ...';
+
         setTimeout(() => {
             closePreLoginSettings();
             document.getElementById('loginError').innerText = '';
         }, 1200);
     };
 
+    // ─── Clear All Settings ───────────────────────────────────────────
     window.clearAllSettings = async function () {
         const confirmed = confirm(
             '⚠️ ต้องการล้างการตั้งค่าทั้งหมดในเบราว์เซอร์นี้หรือไม่?\n\n' +
@@ -689,25 +683,69 @@
             supabaseClient = null;
         }
 
-        ['supabaseUrl','supabaseKey','bankInfo','logoUrl','qrUrl',
-         'waterRate','elecRate','lastSelectedRoom','lastSelectedHistory'].forEach(k => store.remove(k));
+        ['supabaseUrl', 'supabaseKey', 'bankInfo', 'logoUrl', 'qrUrl', 'roomCount',
+         'waterRate', 'elecRate'].forEach(k => store.remove(k));
 
-        ['supabaseUrl','supabaseKey','bankInfoInput','logoUrlInput','qrUrlInput'].forEach(id => {
+        ['supabaseUrl', 'supabaseKey', 'bankInfoInput', 'logoUrlInput', 'qrUrlInput'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
+        const rc = document.getElementById('roomCountInput');
+        if (rc) rc.value = 10;
         document.getElementById('preSupabaseUrl').value = '';
         document.getElementById('preSupabaseKey').value = '';
+        document.getElementById('preRoomCount').value   = 10;
 
+        applyRoomCount();
         updateDisplayFromSettings();
         updateDbStatusBadge(false);
+
         document.getElementById('loginEmail').value    = '';
         document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').innerText = '';
+
         closePreLoginSettings();
         hideApp();
         alert('✅ ล้างการตั้งค่าทั้งหมดเรียบร้อย กรุณาตั้งค่า Supabase ใหม่ก่อนเข้าสู่ระบบ');
     };
+
+    // ─── Room Count ───────────────────────────────────────────────────
+    function applyRoomCount(overrideCount) {
+        let count = overrideCount || parseInt(document.getElementById('roomCountInput').value) || 10;
+        count = Math.min(Math.max(count, 1), 200);
+        document.getElementById('roomCountInput').value = count;
+
+        const roomNoSel   = document.getElementById('roomNo');
+        const historySel  = document.getElementById('historyRoomSelect');
+        const prevRoom    = roomNoSel.value;
+        const prevHistory = historySel.value;
+
+        let html = '';
+        for (let i = 1; i <= count; i++) html += `<option value="${i}">${i}</option>`;
+        roomNoSel.innerHTML  = html;
+        historySel.innerHTML = html;
+
+        if (prevRoom    && parseInt(prevRoom)    <= count) roomNoSel.value  = prevRoom;
+        if (prevHistory && parseInt(prevHistory) <= count) historySel.value = prevHistory;
+    }
+
+    async function syncRoomCountFromDB() {
+        if (!supabaseClient) return;
+        try {
+            const { data, error } = await supabaseClient
+                .from('rooms_data')
+                .select('room_number')
+                .order('room_number', { ascending: false })
+                .limit(1);
+            if (!error && data && data.length > 0) {
+                const maxRoom = data[0].room_number;
+                store.set('roomCount', maxRoom);
+                applyRoomCount(maxRoom);
+            }
+        } catch (e) {
+            console.warn('syncRoomCount skipped:', e.message);
+        }
+    }
 
     // ─── Display From Settings ────────────────────────────────────────
     function updateDisplayFromSettings() {
@@ -742,11 +780,11 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         if (btnEl) btnEl.classList.add('active');
-        if (tabId === 'history-tab') {
-            checkMeterEditedForHistory();
-            fetchHistoryFromSupabase();
-        }
+        if (tabId === 'history-tab') fetchHistoryFromSupabase();
     };
+
+    // ─── Invoice Calculation ──────────────────────────────────────────
+    // ฟังก์ชันคำนวณบิล (calculateInvoice) ถูกย้ายไปอยู่ในไฟล์ billing-calc.js แล้ว
 
     // ─── Date Helpers ─────────────────────────────────────────────────
     window.updateDateDisplay = function (input) {
@@ -764,37 +802,10 @@
         return `${d}/${m}/${y}`;
     }
 
-    // ─── onRoomChange — บันทึกห้องที่เลือกล่าสุด ─────────────────────
-    window.onRoomChange = function () {
-        const room = document.getElementById('roomNo').value;
-        store.set('lastSelectedRoom', room);
-        autoFetchLastMeter();
-    };
-
-    window.onHistoryRoomChange = function () {
-        const room = document.getElementById('historyRoomSelect').value;
-        store.set('lastSelectedHistory', room);
-        checkMeterEditedForHistory();
-        resetPageAndFilter();
-    };
-
-    // ─── เช็ค meter_edited สำหรับแท็บประวัติ ─────────────────────────
-    function checkMeterEditedForHistory() {
-        const selectedRoom = document.getElementById('historyRoomSelect').value;
-        const roomData = roomsList.find(r => r.room_number === selectedRoom);
-        const bannerEl = document.getElementById('meterEditedBanner');
-        if (roomData && roomData.meter_edited) {
-            bannerEl.style.display = 'flex';
-        } else {
-            bannerEl.style.display = 'none';
-        }
-    }
-
     // ─── Auto Fetch: ดึงค่าเช่า + มิเตอร์ + อัตราน้ำ-ไฟ ────────────────
     window.autoFetchLastMeter = async function () {
         if (!supabaseClient) return;
         const room = document.getElementById('roomNo').value;
-        if (!room) return;
 
         const waterRate = parseFloat(store.get('waterRate')) || 30;
         const elecRate  = parseFloat(store.get('elecRate'))  || 6;
@@ -809,12 +820,26 @@
                 .limit(1);
 
             if (!rdErr && rd && rd.length > 0) {
-                if (rd[0].base_rent != null) document.getElementById('rentAmount').value = rd[0].base_rent;
+                if (rd[0].base_rent != null) {
+                    document.getElementById('rentAmount').value = rd[0].base_rent;
+                }
                 document.getElementById('waterBefore').value = rd[0].last_water ?? 0;
                 document.getElementById('elecBefore').value  = rd[0].last_elec  ?? 0;
             } else {
-                document.getElementById('waterBefore').value = 0;
-                document.getElementById('elecBefore').value  = 0;
+                const { data, error } = await supabaseClient
+                    .from('room_records')
+                    .select('water_after, elec_after')
+                    .eq('room', room)
+                    .order('id', { ascending: false })
+                    .limit(1);
+
+                if (!error && data && data.length > 0) {
+                    document.getElementById('waterBefore').value = data[0].water_after ?? 0;
+                    document.getElementById('elecBefore').value  = data[0].elec_after  ?? 0;
+                } else {
+                    document.getElementById('waterBefore').value = 0;
+                    document.getElementById('elecBefore').value  = 0;
+                }
             }
         } catch (e) {
             console.warn('autoFetchLastMeter error:', e.message);
@@ -836,8 +861,6 @@
 
         const formattedDate = formatDateToDMY(rawDate);
         const roomNo = document.getElementById('roomNo').value;
-        if (!roomNo) return alert('❌ ไม่มีห้องให้เลือก กรุณาเพิ่มห้องใน Dashboard ก่อนครับ');
-
         const btn = document.getElementById('saveToDB');
         btn.disabled = true;
         btn.innerText = '⏳ กำลังตรวจสอบ...';
@@ -882,25 +905,20 @@
             const { error } = await supabaseClient.from('room_records').insert([payload]);
             if (error) throw error;
 
-            // อัปเดต rooms_data: เลขมิเตอร์ล่าสุด + รีเซ็ต meter_edited
             try {
                 await supabaseClient
                     .from('rooms_data')
                     .update({
-                        last_water:   waterAfter,
-                        last_elec:    elecAfter,
-                        last_total:   grandTotal,
-                        last_month:   formattedDate,
-                        paid_status:  false,
-                        meter_edited: false   // รีเซ็ตหลังออกบิลใหม่
+                        last_water: waterAfter,
+                        last_elec:  elecAfter,
+                        last_total: grandTotal,
+                        last_month: formattedDate,
+                        paid_status: false
                     })
-                    .eq('room_number', roomNo);
+                    .eq('room_number', parseInt(roomNo));
             } catch (dashErr) {
                 console.warn('rooms_data update skipped:', dashErr.message);
             }
-
-            // รีเฟรช roomsList เพื่ออัปเดตสถานะ meter_edited
-            await loadRoomsList();
 
             alert(`✅ บันทึกข้อมูลห้อง ${roomNo} วันที่ ${formattedDate} สำเร็จ!`);
 
@@ -924,6 +942,7 @@
                 .from('room_records')
                 .select('*')
                 .order('id', { ascending: false });
+
             if (error) throw error;
             globalHistoryData = data || [];
             resetPageAndFilter();
@@ -1002,7 +1021,143 @@
         displayHistoryPage();
     };
 
-})();
+    // ─── Export CSV ───────────────────────────────────────────────────
+    /**
+     * ขั้นตอนการทำงาน:
+     * 1. ถ้ายังไม่มีข้อมูลในหน่วยความจำ → ดึงจาก Supabase ก่อนอัตโนมัติ
+     * 2. กรองเฉพาะห้องที่เลือก
+     * 3. ถ้า > 12 แถว → ถามผ่าน confirm() ว่าจะเอา 12 ล่าสุด หรือทั้งหมด
+     * 4. สร้างไฟล์ .csv แล้วดาวน์โหลด
+     */
+    window.exportCSV = async function () {
+        const btn = document.getElementById('exportCsvBtn');
+        const selectedRoom = document.getElementById('historyRoomSelect').value;
+
+        // ── ขั้น 1: ดึงข้อมูลถ้ายังไม่มี ──
+        if (globalHistoryData.length === 0) {
+            if (!supabaseClient) {
+                alert('❌ ไม่พบการเชื่อมต่อฐานข้อมูลครับ');
+                return;
+            }
+            btn.disabled = true;
+            btn.textContent = '⏳ กำลังดึงข้อมูล...';
+            try {
+                const { data, error } = await supabaseClient
+                    .from('room_records')
+                    .select('*')
+                    .order('id', { ascending: false });
+                if (error) throw error;
+                globalHistoryData = data || [];
+                // อัปเดตตารางด้วย เผื่อผู้ใช้ยังไม่เคยกด "ดึงข้อมูล"
+                filteredData = globalHistoryData.filter(
+                    item => String(item.room) === String(selectedRoom)
+                );
+                displayHistoryPage();
+            } catch (e) {
+                alert('❌ ดึงข้อมูลไม่สำเร็จ: ' + e.message);
+                btn.disabled = false;
+                btn.textContent = '📥 Export CSV';
+                return;
+            }
+            btn.disabled = false;
+            btn.textContent = '📥 Export CSV';
+        }
+
+        // ── ขั้น 2: กรองห้องที่เลือก ──
+        // ข้อมูลเรียงจาก id DESC อยู่แล้ว (ล่าสุดขึ้นก่อน)
+        const roomData = globalHistoryData.filter(
+            item => String(item.room) === String(selectedRoom)
+        );
+
+        if (roomData.length === 0) {
+            alert(`📅 ไม่พบข้อมูลประวัติของห้อง ${selectedRoom} ครับ`);
+            return;
+        }
+
+        // ── ขั้น 3: ถามถ้าเกิน 12 แถว ──
+        let exportData = roomData;
+        if (roomData.length > ROWS_PER_PAGE) {
+            const doLatest = confirm(
+                `ห้อง ${selectedRoom} มีข้อมูลทั้งหมด ${roomData.length} รายการ\n\n` +
+                `กด  ตกลง  →  Export เฉพาะ ${ROWS_PER_PAGE} รายการล่าสุด\n` +
+                `กด  ยกเลิก  →  Export ทั้งหมด ${roomData.length} รายการ`
+            );
+            exportData = doLatest ? roomData.slice(0, ROWS_PER_PAGE) : roomData;
+        }
+
+        // ── ขั้น 4: สร้าง CSV ──
+        const headers = [
+            'วัน-เวลาที่บันทึก',
+            'วันที่ออกใบเสร็จ',
+            'ห้อง',
+            'ค่าเช่าห้อง',
+            'มิเตอร์น้ำก่อน',
+            'มิเตอร์น้ำหลัง',
+            'หน่วยน้ำที่ใช้',
+            'รวมค่าน้ำ',
+            'มิเตอร์ไฟก่อน',
+            'มิเตอร์ไฟหลัง',
+            'หน่วยไฟที่ใช้',
+            'รวมค่าไฟ',
+            'อื่นๆ',
+            'ส่วนลด',
+            'ยอดรวมสุทธิ'
+        ];
+
+        const rows = exportData.map(item => {
+            // คำนวณ "มิเตอร์ก่อน" เหมือนที่แสดงในตาราง
+            const wBefore = (item.water_before != null) ? item.water_before
+                : (parseFloat(item.water_after) - parseFloat(item.water_unit)) || 0;
+            const eBefore = (item.elec_before  != null) ? item.elec_before
+                : (parseFloat(item.elec_after)  - parseFloat(item.elec_unit))  || 0;
+
+            const dateStr = item.timestamp
+                ? new Date(item.timestamp).toLocaleString('th-TH', { hour12: false })
+                : '';
+
+            return [
+                dateStr,
+                item.month       || '',
+                item.room,
+                item.rent        ?? 0,
+                wBefore,
+                item.water_after ?? 0,
+                item.water_unit  ?? 0,
+                parseFloat(item.water_total || 0).toFixed(2),
+                eBefore,
+                item.elec_after  ?? 0,
+                item.elec_unit   ?? 0,
+                parseFloat(item.elec_total  || 0).toFixed(2),
+                parseFloat(item.internet    || 0).toFixed(2),
+                parseFloat(item.discount    || 0).toFixed(2),
+                parseFloat(item.grand_total || 0).toFixed(2)
+            ];
+        });
+
+        // ห่อ cell ด้วย " " เผื่อค่ามีคอมม่าหรือ newline
+        function escapeCell(val) {
+            const s = String(val);
+            return (s.includes(',') || s.includes('"') || s.includes('\n'))
+                ? `"${s.replace(/"/g, '""')}"` : s;
+        }
+
+        // \uFEFF = BOM ทำให้ Excel เปิดไฟล์แล้วแสดงภาษาไทยได้ถูกต้อง
+        const csvContent = '\uFEFF'
+            + [headers, ...rows].map(r => r.map(escapeCell).join(',')).join('\r\n');
+
+        // สร้าง link ชั่วคราวแล้วคลิกเพื่อดาวน์โหลด
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url  = URL.createObjectURL(blob);
+        const a    = document.createElement('a');
+        a.href     = url;
+        a.download = `room_${selectedRoom}_history.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+})(); // ── end IIFE ──
 </script>
 </body>
 </html>
