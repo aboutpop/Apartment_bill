@@ -63,21 +63,8 @@
         /* ─── Main Layout ─── */
         .container { max-width: 1200px; }
         .header-area { margin-bottom: 10px; }
-        .header-right { display: flex; align-items: center; gap: 12px; }
-
-        /* ─── ✅ ปุ่ม Dashboard ใน Header (ย้ายมาจาก Tab) ─── */
-        .btn-dashboard-header {
-            background: #1a3a6b; color: white;
-            border: none; padding: 8px 16px; border-radius: 4px;
-            cursor: pointer; font-weight: bold; font-size: 14px;
-            text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
-        }
-        .btn-dashboard-header:hover { background: #0f2548; }
-
         .logout-btn { background: #d32f2f; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold; }
-
-        /* ─── Tabs ─── */
-        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); align-items: center; }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid var(--primary-color); }
         .tab-btn {
             background: #e0e0e0; border: none; padding: 12px 24px; cursor: pointer;
             font-size: 16px; font-weight: bold;
@@ -88,17 +75,6 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        /* ─── ✅ ปุ่มรีเฟรชห้อง (แทน tab Dashboard เดิม) ─── */
-        .btn-refresh-rooms {
-            background: #e8f0fe; color: #1a3a6b;
-            border: 1.5px solid #c5d4f5; padding: 8px 16px;
-            border-radius: 6px; cursor: pointer; font-weight: bold;
-            font-size: 14px; margin-left: auto;
-            transition: background 0.2s;
-        }
-        .btn-refresh-rooms:hover { background: #c5d4f5; }
-        .btn-refresh-rooms:disabled { opacity: 0.6; cursor: not-allowed; }
-
         /* ─── Invoice ─── */
         .invoice-header { display: flex; justify-content: space-between; align-items: flex-start; }
         .meta-item { font-size: 16px; }
@@ -106,20 +82,30 @@
         .image-right-section { display: flex; gap: 20px; align-items: flex-start; }
         .qr-section { text-align: center; background: transparent; border: none; padding: 0; width: 140px; }
         .logo-section { text-align: center; background: transparent; border: none; padding: 0; width: 161px; display: flex; align-items: center; justify-content: center; }
-        .qr-placeholder {
-            width: 140px; height: 140px; background: transparent; margin: 0 auto;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; color: #999; border: 1px dashed #ccc;
-        }
-        .logo-placeholder {
-            width: 161px; height: 161px; background: transparent; margin: 0 auto;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 12px; color: #999; border: 1px dashed #ccc;
-        }
+        .qr-placeholder { width: 140px; height: 140px; background: transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; border: 1px dashed #ccc; }
+        .logo-placeholder { width: 161px; height: 161px; background: transparent; margin: 0 auto; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #999; border: 1px dashed #ccc; }
         .qr-text { font-size: 12px; font-weight: bold; color: #1a237e; margin-top: 5px; }
         .btn:disabled { background-color: #ccc; color: #666; cursor: not-allowed; }
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-success:hover:not(:disabled) { background-color: #2c974b; }
+
+        /* ─── Header ปุ่ม Dashboard ─── */
+        .btn-dashboard-header {
+            background: #1a3a6b; color: white; border: none;
+            padding: 8px 16px; border-radius: 4px; cursor: pointer;
+            font-weight: bold; font-size: 14px; text-decoration: none;
+            display: inline-flex; align-items: center; gap: 5px;
+        }
+        .btn-dashboard-header:hover { background: #0f2548; }
+
+        /* ─── ปุ่มรีเฟรชห้อง (แทน tab Dashboard เดิม) ─── */
+        .tab-btn-refresh {
+            background: #e8f0fe; color: #1a3a6b; border: none;
+            padding: 12px 20px; cursor: pointer; font-size: 14px; font-weight: bold;
+            border-top-left-radius: 8px; border-top-right-radius: 8px;
+            margin-right: 4px; transition: all 0.2s;
+        }
+        .tab-btn-refresh:hover { background: #c8d9f5; }
 
         /* ─── Config Tab ─── */
         .config-group { margin-bottom: 15px; }
@@ -141,8 +127,7 @@
         }
         .db-status-warning {
             color: #b45309; background: #fff3e0; border-radius: 6px;
-            padding: 6px 10px; font-size: 13px; font-weight: bold;
-            margin-bottom: 8px;
+            padding: 6px 10px; font-size: 13px; font-weight: bold; margin-bottom: 8px;
         }
 
         /* ─── Guest Box ─── */
@@ -160,6 +145,15 @@
         }
         .btn-guest:hover { background: #9a3412; }
         .guest-desc { font-size: 13px; color: #666; margin-top: 12px; line-height: 1.7; }
+
+        /* ─── Meter Edited Notice (แท็บประวัติ) ─── */
+        .meter-edited-banner {
+            background: #fef3c7; border: 1px solid #fbbf24; border-radius: 8px;
+            padding: 12px 16px; margin-bottom: 16px;
+            font-size: 14px; color: #92400e;
+            display: flex; align-items: flex-start; gap: 10px;
+        }
+        .meter-edited-banner .banner-icon { font-size: 18px; flex-shrink: 0; }
 
         @media print {
             .header-area, .tabs, .btn-group, .filter-section, .config-group, h3,
@@ -197,15 +191,8 @@
             <button id="loginBtn" class="btn btn-primary" style="width:100%; margin-top:10px;" onclick="handleLogin()">
                 🔓 เข้าสู่ระบบ
             </button>
-            <!-- ✅ กล่องแจ้งเตือนเมื่อ session หมดอายุจากแท็บอื่น -->
-            <div id="sessionExpiredMsg" style="display:none; margin-top:12px; padding:10px 14px;
-                background:#fee2e2; border:1px solid #dc2626; border-radius:8px;
-                font-size:13px; font-weight:600; color:#dc2626;">
-                ⚠️ Session หมดอายุหรือถูกออกจากระบบจากแท็บอื่น กรุณาเข้าสู่ระบบใหม่
-            </div>
             <div id="loginError" style="color:red; margin-top:15px; font-size:14px; font-weight:bold; min-height:20px;"></div>
         </div>
-
         <div class="guest-box">
             <a href="calculator.html" target="_blank" class="btn-guest">🧾 ใบเสร็จเปล่า</a>
             <div class="guest-desc">คำนวณและพิมพ์ใบเสร็จค่าเช่า โดยไม่ต้อง login</div>
@@ -253,12 +240,9 @@
     <div class="container">
         <div class="header-area">
             <h2>🏠 ระบบออกใบเสร็จและจัดการห้องเช่า สำหรับ SME</h2>
-            <div class="header-right">
+            <div style="display:flex; align-items:center; gap:12px;">
                 <span id="userEmailDisplay" style="font-size:14px; color:#555;"></span>
-                <!-- ✅ ปุ่ม Dashboard ย้ายมาอยู่ที่นี่ ระหว่าง username กับปุ่ม logout -->
-                <a href="rooms_data.html" target="_blank" class="btn-dashboard-header">
-                    🏠 Dashboard จัดการห้อง
-                </a>
+                <a href="rooms_data.html" target="_blank" class="btn-dashboard-header">🏠 Dashboard จัดการห้อง</a>
                 <button class="logout-btn" onclick="handleLogout()">🔒 ออกจากระบบ</button>
             </div>
         </div>
@@ -266,10 +250,7 @@
         <div class="tabs">
             <button class="tab-btn active" onclick="switchTab('invoice-tab', this)">📝 ออกใบเสร็จค่าเช่า</button>
             <button class="tab-btn" onclick="switchTab('history-tab', this)">📊 ประวัติข้อมูลรายห้อง</button>
-            <!-- ✅ ปุ่มรีเฟรชรายชื่อห้อง แทน tab Dashboard เดิม -->
-            <button class="btn-refresh-rooms" id="btnRefreshRooms" onclick="loadRoomsFromDB()">
-                🔄 รีเฟรชห้อง
-            </button>
+            <button class="tab-btn-refresh" onclick="refreshRoomList()">🔄 รีเฟรชห้อง</button>
         </div>
 
         <!-- แท็บออกบิล -->
@@ -376,10 +357,19 @@
         <!-- แท็บประวัติ -->
         <div id="history-tab" class="tab-content">
             <h3>📊 ตารางประวัติข้อมูลย้อนหลังรายห้อง</h3>
+
+            <!-- แจ้งเตือน meter_edited — แสดงเมื่อห้องที่เลือกมีการแก้ไขมิเตอร์ -->
+            <div id="meterEditedBanner" class="meter-edited-banner" style="display:none;">
+                <span class="banner-icon">🔧</span>
+                <div>
+                    <strong>มิเตอร์ถูกแก้ไขหลังออกบิล</strong><br>
+                    <span id="meterEditedDetail">เลขมิเตอร์ของห้องนี้ถูกแก้ไขใน Dashboard หลังจากออกบิลล่าสุด ตรวจสอบให้แน่ใจก่อนออกบิลครั้งต่อไป</span>
+                </div>
+            </div>
+
             <div class="filter-section">
                 <label style="font-weight:bold; font-size:16px;">เลือกหมายเลขห้อง:</label>
-                <!-- ✅ ใช้รายชื่อห้องชุดเดียวกัน โหลดพร้อมกันตอนเปิดหน้า -->
-                <select id="historyRoomSelect" style="width:120px;" onchange="resetPageAndFilter()"></select>
+                <select id="historyRoomSelect" style="width:120px;" onchange="onHistoryRoomChange()"></select>
                 <button class="btn btn-primary" onclick="fetchHistoryFromSupabase()"
                     style="padding:8px 16px; font-size:14px;">🔄 ดึงข้อมูลอัปเดตล่าสุด</button>
             </div>
@@ -416,8 +406,7 @@
             </div>
         </div>
 
-        <!-- hidden inputs ที่ยังต้องใช้ใน JS -->
-        <!-- ✅ ลบ roomCountInput ออกแล้ว ไม่ใช้แล้ว -->
+        <!-- hidden inputs ที่ยังต้องใช้ใน JS แต่ไม่แสดงผล -->
         <div style="display:none;">
             <input type="text" id="supabaseUrl">
             <input type="text" id="supabaseKey">
@@ -434,11 +423,12 @@
     'use strict';
 
     // ─── State ───────────────────────────────────────────────────────
-    let supabaseClient  = null;
+    let supabaseClient = null;
     let globalHistoryData = [];
-    let currentPage     = 1;
+    let currentPage = 1;
     const ROWS_PER_PAGE = 12;
-    let filteredData    = [];
+    let filteredData = [];
+    let roomsList = []; // รายชื่อห้องจากฐานข้อมูล
 
     // ─── Storage helpers ─────────────────────────────────────────────
     const store = {
@@ -456,7 +446,6 @@
         calculateInvoice();
     });
 
-    // ─── โหลดค่า settings จาก localStorage ใส่ input ─────────────────
     function loadSettingsToInputs() {
         const map = {
             'supabaseUrl': 'supabaseUrl',
@@ -473,9 +462,9 @@
 
     function setTodayDate() {
         const today = new Date();
-        const yyyy  = today.getFullYear();
-        const mm    = String(today.getMonth() + 1).padStart(2, '0');
-        const dd    = String(today.getDate()).padStart(2, '0');
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
         const dateInput = document.getElementById('billingMonth');
         dateInput.value = `${yyyy}-${mm}-${dd}`;
         updateDateDisplay(dateInput);
@@ -487,42 +476,14 @@
         const key = document.getElementById('supabaseKey').value.trim();
         if (url && key) {
             supabaseClient = supabase.createClient(url, key, {
-                auth: {
-                    persistSession: true,
-                    autoRefreshToken: true,
-                    detectSessionInUrl: false
-                }
+                auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false }
             });
-
-            // ✅ ฟัง event session จากทุกแท็บ — ถ้าถูก logout จากที่อื่นจะแสดงแจ้งเตือนทันที
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                if (event === 'SIGNED_OUT') {
-                    showLoginWithExpiredMessage();
-                } else if (event === 'SIGNED_IN' && session) {
-                    // กรณี login จากแท็บนี้จะถูก handle ใน handleLogin แล้ว
-                    // ที่นี่ handle กรณี login จากแท็บอื่น
-                }
-            });
-
             updateDbStatusBadge(true);
             return true;
         }
         supabaseClient = null;
         updateDbStatusBadge(false);
         return false;
-    }
-
-    // ✅ แสดง login overlay พร้อมข้อความแจ้งเตือน session หมด
-    function showLoginWithExpiredMessage() {
-        document.getElementById('sessionExpiredMsg').style.display = 'block';
-        document.getElementById('loginPassword').value  = '';
-        document.getElementById('loginError').innerText = '';
-        document.getElementById('loginOverlay').style.display = 'flex';
-        document.getElementById('mainApp').style.display      = 'none';
-        document.getElementById('userEmailDisplay').textContent = '';
-        const url = store.get('supabaseUrl');
-        const key = store.get('supabaseKey');
-        updateDbStatusBadge(!!(url && key));
     }
 
     function updateDbStatusBadge(isConfigured) {
@@ -537,15 +498,17 @@
         }
     }
 
-    // ─── ตรวจสอบ session เมื่อโหลดหน้า ──────────────────────────────
     async function initSupabaseAndCheckSession() {
         const initialized = initSupabase();
         if (!initialized) { hideApp(); return; }
         try {
             const { data: { session }, error } = await supabaseClient.auth.getSession();
             if (error) throw error;
-            if (session) showApp(session.user.email);
-            else hideApp();
+            if (session) {
+                showApp(session.user.email);
+            } else {
+                hideApp();
+            }
         } catch (e) {
             console.error('Session check error:', e);
             hideApp();
@@ -560,7 +523,7 @@
 
         const initialized = initSupabase();
         if (!initialized) {
-            errorEl.innerText = '❌ ยังไม่ได้ตั้งค่า Supabase กรุณากดปุ่ม "⚙️ ตั้งค่าฐานข้อมูล" ก่อนครับ';
+            errorEl.innerText = '❌ ยังไม่ได้ตั้งค่า Supabase กรุณากดปุ่ม "⚙️ ตั้งค่าฐานข้อมูล" ด้านล่างก่อนครับ';
             return;
         }
 
@@ -571,8 +534,8 @@
             return;
         }
 
-        btnLogin.disabled   = true;
-        btnLogin.innerText  = '⏳ กำลังเข้าสู่ระบบ...';
+        btnLogin.disabled = true;
+        btnLogin.innerText = '⏳ กำลังเข้าสู่ระบบ...';
 
         try {
             const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -588,7 +551,7 @@
         } catch (e) {
             errorEl.innerText = '❌ เกิดข้อผิดพลาด: ' + e.message;
         } finally {
-            btnLogin.disabled  = false;
+            btnLogin.disabled = false;
             btnLogin.innerText = '🔓 เข้าสู่ระบบ';
         }
     };
@@ -599,8 +562,8 @@
             try { await supabaseClient.auth.signOut(); } catch (e) {}
             supabaseClient = null;
         }
-        document.getElementById('loginEmail').value     = '';
-        document.getElementById('loginPassword').value  = '';
+        document.getElementById('loginEmail').value    = '';
+        document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').innerText = '';
         hideApp();
     };
@@ -608,95 +571,70 @@
     // ─── Show/Hide App ────────────────────────────────────────────────
     function showApp(userEmail) {
         document.getElementById('loginOverlay').style.display = 'none';
-        document.getElementById('mainApp').style.display      = 'block';
+        document.getElementById('mainApp').style.display = 'block';
         if (userEmail) {
             document.getElementById('userEmailDisplay').textContent = '👤 ' + userEmail;
         }
-        // ✅ ดึงรายชื่อห้องจากฐานข้อมูลทันทีหลัง login
-        loadRoomsFromDB();
+
+        // ตรวจ session หมดอายุ
+        supabaseClient.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') hideApp();
+        });
+
+        loadRoomsList().then(() => autoFetchLastMeter());
     }
 
     function hideApp() {
-        document.getElementById('sessionExpiredMsg').style.display = 'none';
         document.getElementById('loginOverlay').style.display = 'flex';
-        document.getElementById('mainApp').style.display      = 'none';
+        document.getElementById('mainApp').style.display = 'none';
         document.getElementById('userEmailDisplay').textContent = '';
         const url = store.get('supabaseUrl');
         const key = store.get('supabaseKey');
         updateDbStatusBadge(!!(url && key));
     }
 
-    // ─── ✅ ดึงรายชื่อห้องจาก rooms_data (แทน applyRoomCount เดิม) ──
-    window.loadRoomsFromDB = async function () {
+    // ─── โหลดรายชื่อห้องจาก DB ───────────────────────────────────────
+    async function loadRoomsList() {
         if (!supabaseClient) return;
-
-        const btn = document.getElementById('btnRefreshRooms');
-        if (btn) { btn.disabled = true; btn.textContent = '⏳ กำลังโหลด...'; }
-
         try {
             const { data, error } = await supabaseClient
                 .from('rooms_data')
-                .select('room_number')
+                .select('room_number, meter_edited')
                 .order('room_number', { ascending: true });
 
             if (error) throw error;
-
-            const rooms = (data || []).map(r => r.room_number);
-            populateRoomDropdowns(rooms);
-
+            roomsList = data || [];
+            populateRoomDropdowns();
         } catch (e) {
-            console.warn('loadRoomsFromDB error:', e.message);
-            // ถ้าโหลดไม่ได้ ให้ dropdown ว่างเปล่า
-            populateRoomDropdowns([]);
-        } finally {
-            if (btn) { btn.disabled = false; btn.textContent = '🔄 รีเฟรชห้อง'; }
+            console.warn('loadRoomsList error:', e.message);
+            roomsList = [];
+            populateRoomDropdowns();
         }
-    };
+    }
 
-    /**
-     * เติมรายชื่อห้องลงใน dropdown ทั้งสองจุด
-     * - รักษาห้องที่เคยเลือกไว้ก่อนหน้า (ถ้ายังมีอยู่)
-     * - ถ้าไม่มีห้องใดเลย → dropdown ว่างเปล่า
-     */
-    function populateRoomDropdowns(rooms) {
+    function populateRoomDropdowns() {
         const roomNoSel  = document.getElementById('roomNo');
         const historySel = document.getElementById('historyRoomSelect');
-
-        // จำห้องที่เลือกไว้ก่อน refresh
-        const prevInvoice = store.get('lastSelectedRoom') || roomNoSel.value;
-        const prevHistory = store.get('lastSelectedRoom') || historySel.value;
+        const prevRoom    = store.get('lastSelectedRoom')    || roomNoSel.value;
+        const prevHistory = store.get('lastSelectedHistory') || historySel.value;
 
         let html = '';
-        rooms.forEach(r => { html += `<option value="${r}">${r}</option>`; });
+        roomsList.forEach(r => {
+            html += `<option value="${r.room_number}">${r.room_number}</option>`;
+        });
 
         roomNoSel.innerHTML  = html;
         historySel.innerHTML = html;
 
-        // คืนค่าที่เคยเลือกไว้ (ถ้ายังมีในรายชื่อ)
-        if (prevInvoice && rooms.includes(prevInvoice)) roomNoSel.value  = prevInvoice;
-        if (prevHistory && rooms.includes(prevHistory)) historySel.value = prevHistory;
-
-        // โหลดข้อมูลห้องที่เลือกอยู่
-        if (rooms.length > 0) autoFetchLastMeter();
+        // คืนค่าที่เคยเลือกไว้
+        if (prevRoom    && roomsList.some(r => r.room_number === prevRoom))    roomNoSel.value  = prevRoom;
+        if (prevHistory && roomsList.some(r => r.room_number === prevHistory)) historySel.value = prevHistory;
     }
 
-    // ─── เมื่อเปลี่ยนห้องใน dropdown ─────────────────────────────────
-    window.onRoomChange = function () {
-        const room = document.getElementById('roomNo').value;
-        // จำห้องที่เลือกล่าสุดไว้ใน localStorage
-        if (room) store.set('lastSelectedRoom', room);
-        autoFetchLastMeter();
-    };
-
-    // ─── Settings ─────────────────────────────────────────────────────
-    window.saveSettings = function () {
-        store.set('supabaseUrl', document.getElementById('supabaseUrl').value);
-        store.set('supabaseKey', document.getElementById('supabaseKey').value);
-        store.set('bankInfo',    document.getElementById('bankInfoInput').value);
-        store.set('logoUrl',     document.getElementById('logoUrlInput').value);
-        store.set('qrUrl',       document.getElementById('qrUrlInput').value);
-        initSupabase();
-        updateDisplayFromSettings();
+    // รีเฟรชรายชื่อห้อง (ปุ่ม 🔄)
+    window.refreshRoomList = async function () {
+        await loadRoomsList();
+        await autoFetchLastMeter();
     };
 
     // ─── Pre-Login Settings ───────────────────────────────────────────
@@ -724,7 +662,6 @@
 
         store.set('supabaseUrl', url);
         store.set('supabaseKey', key);
-
         document.getElementById('supabaseUrl').value = url;
         document.getElementById('supabaseKey').value = key;
 
@@ -733,14 +670,12 @@
 
         msgEl.style.color = 'var(--success-color)';
         msgEl.innerText = '✅ บันทึกเรียบร้อย! กำลังกลับไปหน้าเข้าสู่ระบบ...';
-
         setTimeout(() => {
             closePreLoginSettings();
             document.getElementById('loginError').innerText = '';
         }, 1200);
     };
 
-    // ─── Clear All Settings ───────────────────────────────────────────
     window.clearAllSettings = async function () {
         const confirmed = confirm(
             '⚠️ ต้องการล้างการตั้งค่าทั้งหมดในเบราว์เซอร์นี้หรือไม่?\n\n' +
@@ -754,24 +689,21 @@
             supabaseClient = null;
         }
 
-        ['supabaseUrl', 'supabaseKey', 'bankInfo', 'logoUrl', 'qrUrl',
-         'waterRate', 'elecRate', 'lastSelectedRoom'].forEach(k => store.remove(k));
+        ['supabaseUrl','supabaseKey','bankInfo','logoUrl','qrUrl',
+         'waterRate','elecRate','lastSelectedRoom','lastSelectedHistory'].forEach(k => store.remove(k));
 
-        ['supabaseUrl', 'supabaseKey', 'bankInfoInput', 'logoUrlInput', 'qrUrlInput'].forEach(id => {
+        ['supabaseUrl','supabaseKey','bankInfoInput','logoUrlInput','qrUrlInput'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.value = '';
         });
-
         document.getElementById('preSupabaseUrl').value = '';
         document.getElementById('preSupabaseKey').value = '';
 
         updateDisplayFromSettings();
         updateDbStatusBadge(false);
-
-        document.getElementById('loginEmail').value     = '';
-        document.getElementById('loginPassword').value  = '';
+        document.getElementById('loginEmail').value    = '';
+        document.getElementById('loginPassword').value = '';
         document.getElementById('loginError').innerText = '';
-
         closePreLoginSettings();
         hideApp();
         alert('✅ ล้างการตั้งค่าทั้งหมดเรียบร้อย กรุณาตั้งค่า Supabase ใหม่ก่อนเข้าสู่ระบบ');
@@ -810,7 +742,10 @@
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.getElementById(tabId).classList.add('active');
         if (btnEl) btnEl.classList.add('active');
-        if (tabId === 'history-tab') fetchHistoryFromSupabase();
+        if (tabId === 'history-tab') {
+            checkMeterEditedForHistory();
+            fetchHistoryFromSupabase();
+        }
     };
 
     // ─── Date Helpers ─────────────────────────────────────────────────
@@ -829,7 +764,33 @@
         return `${d}/${m}/${y}`;
     }
 
-    // ─── Auto Fetch: ดึงค่าเช่า + มิเตอร์ + อัตราน้ำ-ไฟ ────────────
+    // ─── onRoomChange — บันทึกห้องที่เลือกล่าสุด ─────────────────────
+    window.onRoomChange = function () {
+        const room = document.getElementById('roomNo').value;
+        store.set('lastSelectedRoom', room);
+        autoFetchLastMeter();
+    };
+
+    window.onHistoryRoomChange = function () {
+        const room = document.getElementById('historyRoomSelect').value;
+        store.set('lastSelectedHistory', room);
+        checkMeterEditedForHistory();
+        resetPageAndFilter();
+    };
+
+    // ─── เช็ค meter_edited สำหรับแท็บประวัติ ─────────────────────────
+    function checkMeterEditedForHistory() {
+        const selectedRoom = document.getElementById('historyRoomSelect').value;
+        const roomData = roomsList.find(r => r.room_number === selectedRoom);
+        const bannerEl = document.getElementById('meterEditedBanner');
+        if (roomData && roomData.meter_edited) {
+            bannerEl.style.display = 'flex';
+        } else {
+            bannerEl.style.display = 'none';
+        }
+    }
+
+    // ─── Auto Fetch: ดึงค่าเช่า + มิเตอร์ + อัตราน้ำ-ไฟ ────────────────
     window.autoFetchLastMeter = async function () {
         if (!supabaseClient) return;
         const room = document.getElementById('roomNo').value;
@@ -848,27 +809,12 @@
                 .limit(1);
 
             if (!rdErr && rd && rd.length > 0) {
-                if (rd[0].base_rent != null) {
-                    document.getElementById('rentAmount').value = rd[0].base_rent;
-                }
+                if (rd[0].base_rent != null) document.getElementById('rentAmount').value = rd[0].base_rent;
                 document.getElementById('waterBefore').value = rd[0].last_water ?? 0;
                 document.getElementById('elecBefore').value  = rd[0].last_elec  ?? 0;
             } else {
-                // fallback: ดึงจาก room_records
-                const { data, error } = await supabaseClient
-                    .from('room_records')
-                    .select('water_after, elec_after')
-                    .eq('room', room)
-                    .order('id', { ascending: false })
-                    .limit(1);
-
-                if (!error && data && data.length > 0) {
-                    document.getElementById('waterBefore').value = data[0].water_after ?? 0;
-                    document.getElementById('elecBefore').value  = data[0].elec_after  ?? 0;
-                } else {
-                    document.getElementById('waterBefore').value = 0;
-                    document.getElementById('elecBefore').value  = 0;
-                }
+                document.getElementById('waterBefore').value = 0;
+                document.getElementById('elecBefore').value  = 0;
             }
         } catch (e) {
             console.warn('autoFetchLastMeter error:', e.message);
@@ -889,11 +835,11 @@
         if (!rawDate) return alert('❌ กรุณาเลือกวันที่ออกใบเสร็จก่อนกดบันทึกครับ');
 
         const formattedDate = formatDateToDMY(rawDate);
-        const roomNo        = document.getElementById('roomNo').value;
-        if (!roomNo) return alert('❌ ไม่พบห้องที่เลือก กรุณารีเฟรชรายชื่อห้องก่อนครับ');
+        const roomNo = document.getElementById('roomNo').value;
+        if (!roomNo) return alert('❌ ไม่มีห้องให้เลือก กรุณาเพิ่มห้องใน Dashboard ก่อนครับ');
 
         const btn = document.getElementById('saveToDB');
-        btn.disabled  = true;
+        btn.disabled = true;
         btn.innerText = '⏳ กำลังตรวจสอบ...';
 
         try {
@@ -936,7 +882,7 @@
             const { error } = await supabaseClient.from('room_records').insert([payload]);
             if (error) throw error;
 
-            // อัปเดต rooms_data: เลขมิเตอร์ล่าสุด + ล้าง meter_edited flag
+            // อัปเดต rooms_data: เลขมิเตอร์ล่าสุด + รีเซ็ต meter_edited
             try {
                 await supabaseClient
                     .from('rooms_data')
@@ -946,19 +892,22 @@
                         last_total:   grandTotal,
                         last_month:   formattedDate,
                         paid_status:  false,
-                        meter_edited: false   // ✅ ล้าง flag เมื่อออกบิลใหม่สำเร็จ
+                        meter_edited: false   // รีเซ็ตหลังออกบิลใหม่
                     })
                     .eq('room_number', roomNo);
             } catch (dashErr) {
                 console.warn('rooms_data update skipped:', dashErr.message);
             }
 
+            // รีเฟรช roomsList เพื่ออัปเดตสถานะ meter_edited
+            await loadRoomsList();
+
             alert(`✅ บันทึกข้อมูลห้อง ${roomNo} วันที่ ${formattedDate} สำเร็จ!`);
 
         } catch (e) {
             alert('❌ เกิดข้อผิดพลาดในการบันทึก: ' + e.message);
         } finally {
-            btn.disabled  = false;
+            btn.disabled = false;
             btn.innerText = '💾 บันทึกข้อมูลลงฐานข้อมูลคลาวด์';
         }
     };
@@ -975,7 +924,6 @@
                 .from('room_records')
                 .select('*')
                 .order('id', { ascending: false });
-
             if (error) throw error;
             globalHistoryData = data || [];
             resetPageAndFilter();
@@ -991,16 +939,14 @@
 
     function filterHistoryData() {
         const selectedRoom = document.getElementById('historyRoomSelect').value;
-        // ✅ จำห้องที่เลือกในแท็บประวัติด้วย
-        if (selectedRoom) store.set('lastSelectedRoom', selectedRoom);
         filteredData = globalHistoryData.filter(item => String(item.room) === String(selectedRoom));
         displayHistoryPage();
     }
 
     function displayHistoryPage() {
-        const tbody        = document.getElementById('historyTableBody');
+        const tbody = document.getElementById('historyTableBody');
         const selectedRoom = document.getElementById('historyRoomSelect').value;
-        tbody.innerHTML    = '';
+        tbody.innerHTML = '';
 
         if (filteredData.length === 0) {
             tbody.innerHTML = `<tr><td colspan="13" style="color:#666;padding:20px;">📅 ไม่พบประวัติของห้อง ${selectedRoom}</td></tr>`;
@@ -1015,7 +961,7 @@
         const pageData = filteredData.slice(start, start + ROWS_PER_PAGE);
 
         pageData.forEach(item => {
-            const tr      = document.createElement('tr');
+            const tr = document.createElement('tr');
             const dateStr = item.timestamp
                 ? new Date(item.timestamp).toLocaleString('th-TH', { hour12: false })
                 : '-';
@@ -1047,8 +993,8 @@
 
         document.getElementById('paginationControls').style.display = 'flex';
         document.getElementById('pageInfo').innerText = `หน้า ${currentPage} / ${totalPages}`;
-        document.getElementById('btnPrev').disabled   = (currentPage === 1);
-        document.getElementById('btnNext').disabled   = (currentPage === totalPages);
+        document.getElementById('btnPrev').disabled = (currentPage === 1);
+        document.getElementById('btnNext').disabled = (currentPage === totalPages);
     }
 
     window.changePage = function (direction) {
