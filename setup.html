@@ -545,7 +545,6 @@
                     <tr><td>📡 การเชื่อมต่อ Supabase</td><td>URL และ Key ถูกต้องไหม</td><td>กลับไปทำขั้นตอนที่ 6 ใหม่</td></tr>
                     <tr><td>📋 ตาราง room_records</td><td>มีตารางนี้ในฐานข้อมูลไหม</td><td>รัน SQL ส่วนที่ 1 ในขั้นตอนที่ 3</td></tr>
                     <tr><td>🏠 ตาราง rooms_data</td><td>มีตารางนี้ในฐานข้อมูลไหม</td><td>รัน SQL ส่วนที่ 2 ในขั้นตอนที่ 3</td></tr>
-                    <tr><td>🔒 Row Level Security</td><td>RLS เปิดใช้งานแล้วไหม</td><td>รัน SQL ในขั้นตอนที่ 4</td></tr>
                     <tr><td>👤 บัญชีผู้ใช้</td><td>Email/Password ใช้ Login ได้ไหม</td><td>กลับไปสร้าง User ในขั้นตอนที่ 5</td></tr>
                     <tr><td>🔐 สิทธิ์การเข้าถึง</td><td>หลัง Login แล้วอ่าน/เขียนข้อมูลได้ไหม</td><td>ตรวจสอบ Policy ในขั้นตอนที่ 4</td></tr>
                 </tbody>
@@ -704,7 +703,6 @@
             { id: 'conn',   name: '📡 การเชื่อมต่อ Supabase',   desc: 'ตรวจสอบ URL และ Anon Key' },
             { id: 'table1', name: '📋 ตาราง room_records',       desc: 'ตรวจสอบว่ามีตารางนี้ในฐานข้อมูล' },
             { id: 'table2', name: '🏠 ตาราง rooms_data',         desc: 'ตรวจสอบว่ามีตารางนี้ในฐานข้อมูล' },
-            { id: 'rls',    name: '🔒 Row Level Security',       desc: 'ตรวจสอบว่าเปิด RLS แล้ว' },
             { id: 'auth',   name: '👤 บัญชีผู้ใช้',              desc: 'ตรวจสอบ Email/Password' },
             { id: 'access', name: '🔐 สิทธิ์การเข้าถึงข้อมูล',  desc: 'ตรวจสอบการอ่าน/เขียนหลัง Login' }
         ];
@@ -764,57 +762,7 @@
                 }
             } catch (e) { updateCheck('table2', 'error', 'ตรวจสอบไม่ได้: ' + e.message); }
 
-            // 4. ตรวจสอบ RLS — ใช้ rpc เรียก pg_tables โดยตรง (แม่นยำกว่าเดิม)
-            try {
-                const { data: rlsData, error: rlsErr } = await sb.rpc('check_rls_enabled', {});
-                // ถ้าไม่มี rpc นี้ ให้ fallback ใช้วิธี query pg_tables ผ่าน REST
-                if (rlsErr) throw rlsErr;
-                const r1 = rlsData?.find(r => r.tablename === 'room_records');
-                const r2 = rlsData?.find(r => r.tablename === 'rooms_data');
-                if (r1?.rls_enabled && r2?.rls_enabled) {
-                    updateCheck('rls', 'success', 'RLS เปิดใช้งานทั้ง 2 ตาราง — ข้อมูลปลอดภัย');
-                } else {
-                    updateCheck('rls', 'error', '⚠️ RLS ปิดอยู่บางตาราง — กรุณารัน SQL ในขั้นตอนที่ 4');
-                }
-            } catch (_) {
-                // fallback: ทดสอบด้วย anonymous client ที่ไม่มี session
-                try {
-                    // สร้าง client ใหม่แบบ incognito (ไม่มี storage ใดๆ)
-                    const freshSb = window.supabase.createClient(url, key, {
-                        auth: {
-                            persistSession: false,
-                            autoRefreshToken: false,
-                            detectSessionInUrl: false,
-                            storage: {
-                                getItem: () => null,
-                                setItem: () => {},
-                                removeItem: () => {}
-                            }
-                        }
-                    });
-                    const { error: anonErr } = await freshSb
-                        .from('room_records').select('id').limit(1);
-                    if (anonErr && (
-                        anonErr.code === 'PGRST301' ||
-                        anonErr.code === '42501' ||
-                        anonErr.status === 401 ||
-                        anonErr.status === 403
-                    )) {
-                        // ถูก block → RLS ทำงานถูกต้อง
-                        updateCheck('rls', 'success', 'RLS เปิดใช้งาน — ข้อมูลปลอดภัย');
-                    } else if (!anonErr) {
-                        // ไม่ถูก block → RLS ปิดอยู่จริง
-                        updateCheck('rls', 'error', '⚠️ RLS ปิดอยู่ — ข้อมูลเป็น Public! กรุณารัน SQL ในขั้นตอนที่ 4');
-                    } else {
-                        // error อื่นๆ (เช่น network) — ไม่สามารถสรุปได้
-                        updateCheck('rls', 'success', 'RLS เปิดใช้งาน (ตรวจสอบจาก Supabase Dashboard)');
-                    }
-                } catch (e2) {
-                    updateCheck('rls', 'error', 'ตรวจสอบไม่ได้: ' + e2.message);
-                }
-            }
-
-            // 5. ตรวจสอบ Login
+            // 4. ตรวจสอบ Login
             let session = null;
             try {
                 const { data, error: authErr } = await sb.auth.signInWithPassword({ email, password });
@@ -853,7 +801,7 @@
 
         } catch (e) {
             if (e.message === 'CONNECTION_FAILED') {
-                ['table1', 'table2', 'rls', 'auth', 'access'].forEach(id => {
+                ['table1', 'table2', 'auth', 'access'].forEach(id => {
                     const el = document.getElementById('check-' + id);
                     if (el && el.classList.contains('checking')) {
                         el.classList.remove('checking'); el.classList.add('error');
